@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import talib as ta
-from norm import normalize_factor
+from util.norm import normalize_factor
 
 def adaptive_momentum_factor(data: pd.DataFrame, 
                            momentum_window: int = 20,

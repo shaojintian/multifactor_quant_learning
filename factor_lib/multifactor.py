@@ -16,23 +16,27 @@
 # ---
 
 # %%
+# 在文件最开头添加以下代码
+import os
+import sys
+# 正确的写法：
+project_root = "/Users/wanting/Downloads/multifactor_quant_learning"
+sys.path.append(project_root)
 
 import numpy as np
 import pandas as pd
 import talib as ta
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import matplotlib.pyplot as plt
 from util.norm import *
 from util.sharpe_calculatio import *
+from calculate_net_vaules import cal_net_values
 pd.plotting.register_matplotlib_converters()
 
 
 
 # %%
 #1. 读取行情数据
-z = pd.read_csv('../data/510050.SH_15.csv',index_col=0)
+z = pd.read_csv('data/510050.SH_15.csv',index_col=0)
 import datetime
 date_threshold = datetime.datetime(2020, 2, 1)
 filtered_df = z[z.index > '2020-01-01']

@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from norm import normalize_factor
+from util.norm import normalize_factor
 
 
 def calc_vol_mean_reversion_factor(prices: pd.Series, 
