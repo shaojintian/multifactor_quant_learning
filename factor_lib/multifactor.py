@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 from util.norm import normalize_factor
 from util.sharpe_calculatio import cal_sharp_random
 from calculate_net_vaules import cal_net_values, cal_net_values_before_rebate
+from verify_risk_orthogonalization import process_multi_factors_nonlinear
 pd.plotting.register_matplotlib_converters()
 
 
@@ -61,6 +62,11 @@ factors = [
 ]
 
 # %%
+# 6. 计算行情收益率
+ret = filtered_df['close'].shift(-1) / filtered_df['close'] - 1
+ret.describe()
+
+# %%
 #### 3.进行风险正交
 from verify_risk_orthogonalization import risk_orthogonalization
 #factor = volatility_factor
@@ -81,9 +87,8 @@ factors = pd.DataFrame({
 #normalized_factor.hist().set_title(f"{factor.name} normalized_factor")
 
 # %%
-from verify_risk_orthogonalization import process_multi_factors
 # 4.处理因子
-processed_factors, final_factor = process_multi_factors(factors)
+processed_factors, final_factor = process_multi_factors_nonlinear(factors,returns=ret)
 
 # 检查处理后的分布
 #print("处理后的因子统计：")
@@ -98,10 +103,6 @@ plt.legend()
 plt.title("Processed Factors Distribution")
 plt.show()
 
-# %%
-# 6. 计算行情收益率
-ret = filtered_df['close'].shift(-1) / filtered_df['close'] - 1
-ret.describe()
 
 # %%
 net_values = cal_net_values(final_factor,ret)
@@ -141,4 +142,5 @@ cleaned_net_values = net_values[~np.isnan(net_values)]
 sharp = cal_sharp_random(cleaned_net_values,period_minutes=15,trading_hours=4)
 
 sharp
+
 

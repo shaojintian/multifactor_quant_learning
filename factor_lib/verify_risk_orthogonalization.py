@@ -81,18 +81,18 @@ def process_multi_factors_linear(factors: pd.DataFrame) -> pd.DataFrame:
     
     return processed_factors, final_factor
 
-def process_multi_factors_nonlinear(factors: pd.DataFrame) -> pd.DataFrame:
+def process_multi_factors_nonlinear(factors_df:pd.DataFrame, returns:pd.Series ,model_type='rf') -> pd.DataFrame:
     """
     完整的多因子处理流程
     """
     # 1. 首先进行风险正交化
-    orthogonal_factors = risk_orthogonalization(factors)
+    orthogonal_factors = risk_orthogonalization(factors_df)
     
     # 2. 处理正交化后的因子值
     processed_factors = process_orthogonalized_factors(orthogonal_factors)
     
     # 3. model
-    final_factor ,model = combine_factors_nonlinear()
+    final_factor ,model = combine_factors_nonlinear(factors_df=processed_factors,returns=returns,model_type=model_type)
 
     # 4. 合成最终因子（可选）
     final_factor.name = u'final_factor which combines all factors'
