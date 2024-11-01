@@ -39,7 +39,8 @@ def combine_factors_nonlinear(factors_df: pd.DataFrame, returns: pd.Series, mode
     y = y[valid_idx]
     
     # 创建一个与原始 y 相同长度的预测数组
-    predictions = np.full(returns.index.shape, np.nan)
+    predictions = np.zeros(len(returns))  # 初始化为零
+    predictions[:] = np.nan  # 先填充为 NaN
 
     # 选择模型
     if model_type == 'rf':
@@ -70,20 +71,19 @@ def combine_factors_nonlinear(factors_df: pd.DataFrame, returns: pd.Series, mode
         
         # 预测并存储结果
         predictions[test_idx] = model.predict(X_test)
-    
-    # 创建最终预测作为组合因子
+
+    # 对齐索引，确保 final_factor 的索引与 returns 一致
     final_factor = pd.Series(predictions, index=returns.index)
+    final_factor = final_factor[returns.index]  # 只保留与 returns 对应的索引
     final_factor.name = 'combined_factor'
     
     # 打印模型评估结果
-    r2 = r2_score(returns, predictions)
+    r2 = r2_score(returns, final_factor)
     print(f"R-squared score: {r2:.4f}")
     
     return final_factor, model
 
-
-
-# # 使用示例：
+# 使用示例：
 # combined_factor, model = combine_factors_nonlinear(
 #     processed_factors,
 #     ret,
