@@ -39,7 +39,7 @@ pd.plotting.register_matplotlib_converters()
 #1. 读取行情数据
 z = pd.read_csv('data/510050.SH_15.csv',index_col=0)
 import datetime
-date_threshold = datetime.datetime(2020, 2, 1)
+#date_threshold = datetime.datetime(2020, 2, 1)
 #filtered_df = z[z.index > '2020-01-01']
 filtered_df = z
 #z.head()
@@ -64,7 +64,7 @@ factors = [
 
 # %%
 # 6. 计算行情收益率
-ret = filtered_df['close'].shift(-1) / filtered_df['close'] - 1
+ret = filtered_df['close'].pct_change().fillna(0)
 ret.describe()
 
 # %%
@@ -79,10 +79,6 @@ factors = pd.DataFrame({
     'adaptive_momentum_factor': adaptive_momentum_factor
 })
 
-# # 进行风险正交
-# orthogonal_factors = risk_orthogonalization(factors)
-
-# orthogonal_factors.describe()
 
 #factor.hist().set_title(f"{factor.name}")
 #normalized_factor.hist().set_title(f"{factor.name} normalized_factor")
@@ -91,26 +87,25 @@ factors = pd.DataFrame({
 # 4.处理因子
 #print("处理前的因子统计："+f"{final_factor.shape}")
 processed_factors, final_factor = process_multi_factors_nonlinear(factors,returns=ret)
-print("处理后的因子统计："+f"{final_factor.shape} returns shape:{ret.shape}")
-print("")
-
+#print("处理后的因子统计："+f"{final_factor.shape} returns shape:{ret.shape}")
+print(final_factor.describe())
 
 # 检查处理后的分布
 #print("处理后的因子统计：")
 #print(processed_factors.describe())
 
-# 可视化
-import matplotlib.pyplot as plt
-plt.figure(figsize=(12, 6))
-for col in processed_factors.columns:
-    plt.hist(processed_factors[col].dropna(), bins=50, alpha=0.3, label=col)
-plt.legend()
-plt.title("Processed Factors Distribution")
-#plt.show()
+# # 可视化
+# import matplotlib.pyplot as plt
+# plt.figure(figsize=(12, 6))
+# for col in processed_factors.columns:
+#     plt.hist(processed_factors[col].dropna(), bins=50, alpha=0.3, label=col)
+# plt.legend()
+# plt.title("Processed Factors Distribution")
+# #plt.show()
 
 # %% 
-plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
-plt.show()
+#plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
+#plt.show()
 
 # %% 
 
@@ -121,8 +116,6 @@ plt.show()
 
 # %%
 net_values = cal_net_values(final_factor,ret)
-
-
 plt.plot(net_values.values)
 plt.title(final_factor.name)
 plt.grid(True)
@@ -132,8 +125,6 @@ plt.show()
 # %%
 # define position ratio == normalized_factor
 net_values_before_rebte = cal_net_values_before_rebate(final_factor,ret)
-
-
 plt.plot(net_values_before_rebte.values)
 plt.title(final_factor.name+'before rebate')
 plt.grid(True)

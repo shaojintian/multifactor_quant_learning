@@ -175,7 +175,7 @@ def cal_net_values(pos: np.array, ret: np.array) -> np.array:
     # 使用 np.hstack 组合当前仓位和仓位变化
     position_changes = np.hstack((pos[0] - 0, np.diff(pos)))
     # 计算净值
-    net_values = 1 + (pos * ret - np.abs(position_changes) * fee * 0).cumsum()
+    net_values = 1 + (pos * ret - np.abs(position_changes) * fee ).cumsum()
     return net_values  # 返回净值序列
 
 

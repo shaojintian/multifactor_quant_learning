@@ -38,9 +38,12 @@ def combine_factors_nonlinear(factors_df: pd.DataFrame, returns: pd.Series, mode
     X = X[valid_idx]
     y = y[valid_idx]
     
+    # 填充 NaN 值为上一个有效值
+    X = X.fillna(method='ffill')
+    y = y.fillna(method='ffill')
+
     # 创建一个与原始 y 相同长度的预测数组
     predictions = np.zeros(len(returns))  # 初始化为零
-    #predictions[:] = np.nan  # 先填充为 NaN
 
     # 选择模型
     if model_type == 'rf':

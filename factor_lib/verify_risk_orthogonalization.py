@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from model.random_forest import combine_factors_nonlinear
+from util.norm import normalize_factor
 
 def risk_orthogonalization(factors: pd.DataFrame) -> pd.DataFrame:
     """
@@ -94,7 +95,8 @@ def process_multi_factors_nonlinear(factors_df:pd.DataFrame, returns:pd.Series ,
     # 3. model
     final_factor ,model = combine_factors_nonlinear(factors_df=processed_factors,returns=returns,model_type=model_type)
 
-    # 4. 合成最终因子（可选）
+    # 4. 最终因子标准化
+    final_factor = normalize_factor(final_factor)
     final_factor.name = u'final_factor which combines all factors'
     
     return processed_factors, final_factor
