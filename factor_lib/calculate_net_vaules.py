@@ -12,7 +12,7 @@ def cal_net_values(pos: np.array, ret: np.array) -> np.array:
     position_changes = np.hstack((pos[0] - 0, np.diff(pos)))
     # 计算净值
     net_values = 1 + (pos * ret - np.abs(position_changes) * fee).cumsum()
-    #net_values = 1 + (pos * ret).cumsum()
+    
     return net_values  # 返回净值序列
 
 def cal_net_values_before_rebate(pos: np.array, ret: np.array) -> np.array:

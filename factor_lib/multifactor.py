@@ -37,10 +37,11 @@ pd.plotting.register_matplotlib_converters()
 
 # %%
 #1. 读取行情数据
-z = pd.read_csv('../data/510050.SH_15.csv',index_col=0)
+z = pd.read_csv('data/510050.SH_15.csv',index_col=0)
 import datetime
 date_threshold = datetime.datetime(2020, 2, 1)
-filtered_df = z[z.index > '2020-01-01']
+#filtered_df = z[z.index > '2020-01-01']
+filtered_df = z
 #z.head()
 
 # %%
@@ -88,7 +89,11 @@ factors = pd.DataFrame({
 
 # %%
 # 4.处理因子
+#print("处理前的因子统计："+f"{final_factor.shape}")
 processed_factors, final_factor = process_multi_factors_nonlinear(factors,returns=ret)
+print("处理后的因子统计："+f"{final_factor.shape} returns shape:{ret.shape}")
+print("")
+
 
 # 检查处理后的分布
 #print("处理后的因子统计：")
@@ -101,8 +106,18 @@ for col in processed_factors.columns:
     plt.hist(processed_factors[col].dropna(), bins=50, alpha=0.3, label=col)
 plt.legend()
 plt.title("Processed Factors Distribution")
+#plt.show()
+
+# %% 
+plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
 plt.show()
 
+# %% 
+
+# # %%
+# # 7. 计算net_values_before_rebate
+# from util.alignment import alignment
+# final_factor, ret= alignment(final_factor,ret)
 
 # %%
 net_values = cal_net_values(final_factor,ret)
@@ -141,6 +156,6 @@ plt.show()
 cleaned_net_values = net_values[~np.isnan(net_values)]
 sharp = cal_sharp_random(cleaned_net_values,period_minutes=15,trading_hours=4)
 
-sharp
+print(f"Annualized Sharpe Ratio: {sharp:.4f}")
 
 
