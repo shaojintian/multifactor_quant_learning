@@ -6,7 +6,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import r2_score
 from matplotlib import pyplot as plt
 
-def combine_factors_nonlinear(factors_df, returns, model_type='rf', n_splits=5):
+def combine_factors_nonlinear(factors_df:pd.DataFrame, returns:pd.Series ,model_type='rf', n_splits=5):
     """
     使用非线性模型组合多因子
     

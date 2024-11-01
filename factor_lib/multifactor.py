@@ -27,16 +27,16 @@ import numpy as np
 import pandas as pd
 import talib as ta
 import matplotlib.pyplot as plt
-from util.norm import *
-from util.sharpe_calculatio import *
-from calculate_net_vaules import cal_net_values
+from util.norm import normalize_factor
+from util.sharpe_calculatio import cal_sharp_random
+from calculate_net_vaules import cal_net_values, cal_net_values_before_rebate
 pd.plotting.register_matplotlib_converters()
 
 
 
 # %%
 #1. 读取行情数据
-z = pd.read_csv('data/510050.SH_15.csv',index_col=0)
+z = pd.read_csv('../data/510050.SH_15.csv',index_col=0)
 import datetime
 date_threshold = datetime.datetime(2020, 2, 1)
 filtered_df = z[z.index > '2020-01-01']
@@ -104,15 +104,35 @@ ret = filtered_df['close'].shift(-1) / filtered_df['close'] - 1
 ret.describe()
 
 # %%
-# define position ratio == normalized_factor
-pos = final_factor
-net_values = cal_net_values(pos,ret)
+net_values = cal_net_values(final_factor,ret)
 
 
 plt.plot(net_values.values)
 plt.title(final_factor.name)
 plt.grid(True)
 plt.show()
+
+
+# %%
+# define position ratio == normalized_factor
+net_values_before_rebte = cal_net_values_before_rebate(final_factor,ret)
+
+
+plt.plot(net_values_before_rebte.values)
+plt.title(final_factor.name+'before rebate')
+plt.grid(True)
+plt.show()
+
+# %%
+# 可视化组合因子的预测效果
+plt.figure(figsize=(12, 6))
+plt.scatter(final_factor, ret, alpha=0.5)
+plt.xlabel('Combined Factor Prediction')
+plt.ylabel('Actual Returns')
+plt.title('Combined Factor vs Actual Returns')
+plt.grid(True)
+plt.show()
+
 
 
 # %%

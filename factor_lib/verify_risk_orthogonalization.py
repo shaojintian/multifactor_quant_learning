@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from model.random_forest import combine_factors_nonlinear
 
 def risk_orthogonalization(factors: pd.DataFrame) -> pd.DataFrame:
     """
@@ -57,7 +58,7 @@ def process_orthogonalized_factors(orthogonal_factors: pd.DataFrame) -> pd.DataF
     return processed_factors
 
 
-def process_multi_factors(factors: pd.DataFrame) -> pd.DataFrame:
+def process_multi_factors_linear(factors: pd.DataFrame) -> pd.DataFrame:
     """
     完整的多因子处理流程
     """
@@ -76,6 +77,24 @@ def process_multi_factors(factors: pd.DataFrame) -> pd.DataFrame:
     # 4. 合成最终因子（可选）
     weights = calculate_weights(processed_factors)
     final_factor = (processed_factors * weights).sum(axis=1)
+    final_factor.name = u'final_factor which combines all factors'
+    
+    return processed_factors, final_factor
+
+def process_multi_factors_nonlinear(factors: pd.DataFrame) -> pd.DataFrame:
+    """
+    完整的多因子处理流程
+    """
+    # 1. 首先进行风险正交化
+    orthogonal_factors = risk_orthogonalization(factors)
+    
+    # 2. 处理正交化后的因子值
+    processed_factors = process_orthogonalized_factors(orthogonal_factors)
+    
+    # 3. model
+    final_factor ,model = combine_factors_nonlinear()
+
+    # 4. 合成最终因子（可选）
     final_factor.name = u'final_factor which combines all factors'
     
     return processed_factors, final_factor
