@@ -81,7 +81,9 @@ def combine_factors_nonlinear(factors_df: pd.DataFrame, returns: pd.Series, mode
     
     return final_factor, model
 
-# 使用示例：
+
+
+# # 使用示例：
 # combined_factor, model = combine_factors_nonlinear(
 #     processed_factors,
 #     ret,
