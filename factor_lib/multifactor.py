@@ -64,7 +64,7 @@ factors = [
 
 # %%
 # 6. 计算行情收益率
-ret = filtered_df['close'].pct_change().fillna(0)
+ret = filtered_df['close'].pct_change().shift(-1).fillna(0)
 ret.describe()
 
 # %%

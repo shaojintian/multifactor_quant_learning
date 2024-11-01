@@ -63,21 +63,21 @@ factors = [
 ]
 
 # %%
-# 6. 计算行情收益率
-ret = filtered_df['close'].pct_change().fillna(0)
+# 6. 对应下一日行情收益率
+ret = filtered_df['close'].pct_change().shift(-1).fillna(0)
 ret.describe()
 
-# %%
-#### 3.进行风险正交
-from verify_risk_orthogonalization import risk_orthogonalization
-#factor = volatility_factor
+# # %%
+# #### 3.进行风险正交
+# from verify_risk_orthogonalization import risk_orthogonalization
+# #factor = volatility_factor
 
-#多个因子的风险正交
-factors = pd.DataFrame({
-    'bolling_band_factor': bolling_band_factor,
-    'volatility_factor': volatility_factor,
-    'adaptive_momentum_factor': adaptive_momentum_factor
-})
+# #单个因子的风险正交
+# factors = pd.DataFrame({
+#     'bolling_band_factor': bolling_band_factor,
+#     'volatility_factor': volatility_factor,
+#     'adaptive_momentum_factor': adaptive_momentum_factor
+# })
 
 
 #factor.hist().set_title(f"{factor.name}")
@@ -86,7 +86,7 @@ factors = pd.DataFrame({
 # %%
 # 4.处理因子
 #print("处理前的因子统计："+f"{final_factor.shape}")
-processed_factors, final_factor = process_multi_factors_nonlinear(factors,returns=ret)
+final_factor = bolling_band_factor
 #print("处理后的因子统计："+f"{final_factor.shape} returns shape:{ret.shape}")
 print(final_factor.describe())
 
