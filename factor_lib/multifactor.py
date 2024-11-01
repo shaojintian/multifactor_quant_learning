@@ -16,12 +16,16 @@
 # ---
 
 # %%
+
 import numpy as np
 import pandas as pd
 import talib as ta
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import matplotlib.pyplot as plt
-from calculate_net_vaules import cal_net_values
-from multifactor import cal_sharp_random
+from util.norm import *
+from util.sharpe_calculatio import *
 pd.plotting.register_matplotlib_converters()
 
 
@@ -64,6 +68,14 @@ factors = pd.DataFrame({
     'adaptive_momentum_factor': adaptive_momentum_factor
 })
 
+# # 进行风险正交
+# orthogonal_factors = risk_orthogonalization(factors)
+
+# orthogonal_factors.describe()
+
+#factor.hist().set_title(f"{factor.name}")
+#normalized_factor.hist().set_title(f"{factor.name} normalized_factor")
+
 # %%
 from verify_risk_orthogonalization import process_multi_factors
 # 4.处理因子
@@ -81,13 +93,6 @@ for col in processed_factors.columns:
 plt.legend()
 plt.title("Processed Factors Distribution")
 plt.show()
-
-
-# %%
-# 4 .计算annual夏普比率
-
-# %%
-#all day trading
 
 # %%
 # 6. 计算行情收益率

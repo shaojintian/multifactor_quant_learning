@@ -1,6 +1,6 @@
 import pandas as pd
 import talib as ta
-from norm import normalize_factor
+from util.norm import normalize_factor
 
 def bolling_band_factor_generator(z:pd.DataFrame) ->pd.Series:
     # input is pd.Series bolling band
