@@ -1,19 +1,5 @@
 # -*- coding: utf-8 -*-
 # ---
-# jupyter:
-#   jupytext:
-#     cell_metadata_filter: -all
-#     custom_cell_magics: kql
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.11.2
-#   kernelspec:
-#     display_name: Python 3
-#     language: python
-#     name: python3
-# ---
 
 # %%
 # 在文件最开头添加以下代码
@@ -86,7 +72,7 @@ ret.describe()
 # %%
 # 4.处理因子
 #print("处理前的因子统计："+f"{final_factor.shape}")
-final_factor = bolling_band_factor
+final_factor = adaptive_momentum_factor
 #print("处理后的因子统计："+f"{final_factor.shape} returns shape:{ret.shape}")
 print(final_factor.describe())
 
