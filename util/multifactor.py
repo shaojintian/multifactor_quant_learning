@@ -64,14 +64,6 @@ factors = pd.DataFrame({
     'adaptive_momentum_factor': adaptive_momentum_factor
 })
 
-# # 进行风险正交
-# orthogonal_factors = risk_orthogonalization(factors)
-
-# orthogonal_factors.describe()
-
-#factor.hist().set_title(f"{factor.name}")
-#normalized_factor.hist().set_title(f"{factor.name} normalized_factor")
-
 # %%
 from verify_risk_orthogonalization import process_multi_factors
 # 4.处理因子
