@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 import talib as ta
 import matplotlib.pyplot as plt
+from calculate_net_vaules import cal_net_values
 pd.plotting.register_matplotlib_converters()
 
 

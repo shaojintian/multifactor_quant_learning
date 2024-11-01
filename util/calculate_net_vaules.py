@@ -1,5 +1,6 @@
 # 7. net value calculation 
 # 1+position ratio * return + abs(position ratio change) * rebate
+import numpy as np
 
 def cal_net_values(pos: np.array, ret: np.array) -> np.array:
     '''计算净值序列
