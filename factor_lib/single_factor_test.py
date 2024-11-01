@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 import talib as ta
 import matplotlib.pyplot as plt
+from util.adjust_rep import adjust_positions
+from datetime import datetime
 from util.norm import normalize_factor
 from util.sharpe_calculatio import cal_sharp_random
 from calculate_net_vaules import cal_net_values, cal_net_values_before_rebate
@@ -72,9 +74,10 @@ ret.describe()
 # %%
 # 4.处理因子
 #print("处理前的因子统计："+f"{final_factor.shape}")
-final_factor = adaptive_momentum_factor
+final_factor = volatility_factor
 #print("处理后的因子统计："+f"{final_factor.shape} returns shape:{ret.shape}")
 print(final_factor.describe())
+final_factor.to_csv(f'factor_test_data/final_factor {final_factor.name} {datetime.datetime.now()} .csv')
 
 # 检查处理后的分布
 #print("处理后的因子统计：")
@@ -101,7 +104,8 @@ print(final_factor.describe())
 # final_factor, ret= alignment(final_factor,ret)
 
 # %%
-net_values = cal_net_values(final_factor,ret)
+next_position = adjust_positions(final_factor,threshold = 0.5)
+net_values = cal_net_values(next_position,ret)
 plt.plot(net_values.values)
 plt.title(final_factor.name)
 plt.grid(True)
@@ -110,9 +114,10 @@ plt.show()
 
 # %%
 # define position ratio == normalized_factor
-net_values_before_rebte = cal_net_values_before_rebate(final_factor,ret)
+
+net_values_before_rebte = cal_net_values_before_rebate(next_position,ret)
 plt.plot(net_values_before_rebte.values)
-plt.title(final_factor.name+'before rebate')
+plt.title(final_factor.name+' before fee')
 plt.grid(True)
 plt.show()
 
