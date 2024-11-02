@@ -15,6 +15,10 @@ def permutation_test(x:pd.Series, y:pd.Series, n_permutations=100) -> float:
     Return:
     p_value (float): p_value,the smaller,the better
     -----------------------------------------"""
+    if x.isna().any():
+        raise ValueError("x contains NaN values")
+    if y.isna().any():
+        raise ValueError("y contains NaN values")
 
     original_corr = pearsonr(x, y)[0]  # 计算原始数据的相关系数
 

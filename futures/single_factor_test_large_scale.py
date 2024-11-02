@@ -50,6 +50,7 @@ from factor_lib.bolling_band_factor import bolling_band_factor_generator
 from factor_lib.volatility_factor import calc_vol_mean_reversion_factor
 from factor_lib.momentum_vol_factor import adaptive_momentum_factor
 from factor_lib.liquidity_factor import *
+from factor_lib.alpha101 import get_alpha
 from factor_benchmark import permutation_test
 
 # 生成因子
@@ -66,6 +67,7 @@ normalized_trade_activity = trade_activity(filtered_df)
 normalized_price_strength = price_strength(filtered_df)
 normalized_volume_imbalance = volume_imbalance(filtered_df)
 normalized_multi_period_momentum = multi_period_momentum(filtered_df)
+alphas = get_alpha(filtered_df)
 
 # %%
 # 6. 计算行情收益率
@@ -82,13 +84,15 @@ def test_single_factor(factor_name, factor_data):
     print(f"处理因子: {factor_name}")
     #processed_factors, final_factor = process_multi_factors_nonlinear(factors, returns=ret)
     final_factor = factor_data.fillna(0)
-    #final_factor.to_csv(f'reports/{z.name}_{factor_name}_factor.csv')
+    final_factor.to_csv(f'reports/{z.name}_{factor_name}_factor.csv')
     # 计算净值
     net_values = cal_net_values(final_factor, ret)
-    #net_values.to_csv(f'reports/{z.name}_{factor_name}_net_values.csv')
+
+    #保存净值，脚本画图
+    net_values.to_csv(f'reports/{z.name}_{factor_name}_net_values.csv')
 
     # plt.figure(figsize=(12, 6))
-    # plt.plot(net_values.index, net_values.values,label='Normalized Price Efficiency', color='blue')
+    # plt.plot(net_values.index, net_values.values)
     # plt.title(f'Net Value of {factor_name}')
     # plt.xlabel('Time (UTC)')
     # plt.ylabel('net value')
@@ -105,9 +109,9 @@ def test_single_factor(factor_name, factor_data):
     # 计算p值
     p_value = permutation_test(final_factor, ret, n_permutations=1000)
     # 可视化
-    #plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
-    #plt.title(f"Histogram of {factor_name}")
-    #plt.show()
+    # plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
+    # plt.title(f"Histogram of {factor_name}")
+    # plt.show()
     
     return sharp, p_value
 
@@ -126,15 +130,32 @@ factors = {
     'normalized_trade_activity': normalized_trade_activity,
     'normalized_price_strength': normalized_price_strength,
     'normalized_volume_imbalance': normalized_volume_imbalance,
-    'normalized_multi_period_momentum': normalized_multi_period_momentum
+    'normalized_multi_period_momentum': normalized_multi_period_momentum,
+    'alpha047': alphas['alpha047'],
+    'alpha037': alphas['alpha037'],
+    'alpha038': alphas['alpha038'],
+    'alpha049': alphas['alpha049'],
+    'alpha041': alphas['alpha041'],
+    'alpha025': alphas['alpha025'], 
 }
+# alpha_dict = {}
+# for i in range(1, 101):
+#     try:
+#         alpha_dict[f'alpha{i:03}'] = normalize_factor(alphas[f'alpha{i:03}']) 
+#     except:
+#         alpha_dict[f'alpha{i:03}'] = pd.Series() # Accessing the alphas dictionary
+# factors.update(alpha_dict)
+
 
 # 打开文件以写入结果
 with open(f'reports/{z.name}_factor_results.txt', 'w') as f:
     for name, data in factors.items():
+        if data.empty:
+            continue
         sharp_ratio, p_value = test_single_factor(name, data)
         # 将结果写入文件
         f.write(f"因子 {name} 的年化夏普比率: {sharp_ratio:.4f}     p值: {p_value:.4f}\n")
+    print("report saved=====================\n")
 
 # %% save final_factor
 # 这里可以选择是否保存最终因子
