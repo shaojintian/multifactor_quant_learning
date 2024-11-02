@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import inspect
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from sklearn.model_selection import TimeSeriesSplit
@@ -28,6 +29,10 @@ def combine_factors_nonlinear(factors_df: pd.DataFrame, returns: pd.Series, mode
     model: object
         训练好的模型
     """
+    if factors_df.empty or returns.empty:
+        raise ValueError(f"输入数据不能为空 {inspect.currentframe().f_code.co_name}")
+    
+    print(factors_df.describe(), returns.describe())
     
     # 准备特征和标签
     X = factors_df.copy()
