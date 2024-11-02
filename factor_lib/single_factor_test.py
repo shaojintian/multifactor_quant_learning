@@ -25,7 +25,7 @@ pd.plotting.register_matplotlib_converters()
 
 # %%
 #1. 读取行情数据
-z = pd.read_csv('data/510050.SH_15.csv',index_col=0)
+z = pd.read_csv('data/crypto/BTC_USDT_day.csv',index_col=0)
 import datetime
 #date_threshold = datetime.datetime(2020, 2, 1)
 #filtered_df = z[z.index > '2020-01-01']
