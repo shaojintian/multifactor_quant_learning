@@ -45,9 +45,9 @@ z.name = f"btcusdt_{_period_minutes}m"
 filtered_df = z
 
 # %%
-from bolling_band_factor import bolling_band_factor_generator
-from volatility_factor import calc_vol_mean_reversion_factor
-from momentum_vol_factor import adaptive_momentum_factor
+from factorlib.bolling_band_factor import bolling_band_factor_generator
+from factorlib.volatility_factor import calc_vol_mean_reversion_factor
+from factorlib.momentum_vol_factor import adaptive_momentum_factor
 
 # 生成因子
 bolling_band_factor = bolling_band_factor_generator(filtered_df)
