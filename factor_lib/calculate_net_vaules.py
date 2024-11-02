@@ -7,6 +7,9 @@ def cal_net_values(pos: np.array, ret: np.array) -> np.array:
     pos: 仓位ratio[-300%,300%]
     ret: 未来1个周期的收益率
     '''
+    if pos.empty or ret.empty:
+        raise ValueError("Input arrays must not be empty") 
+    #print(pos)
     fee = 0.0002  # 仓位每次变动的滑损(maker 0.02%， taker 0.05%)
     # 使用 np.hstack 组合当前仓位和仓位变化
     position_changes = np.hstack((pos[0] - 0, np.diff(pos)))

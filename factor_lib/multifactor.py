@@ -36,7 +36,7 @@ pd.plotting.register_matplotlib_converters()
 
 # %%
 # 0 data preprocess
-_period_minutes = 60
+_period_minutes = 30
 _trading_hours = 24
 # %%
 #1. 读取行情数据
@@ -91,8 +91,8 @@ factors = pd.DataFrame({
 # %%
 # 4.处理因子
 print("4.处理前的因子统计："+f"{factors.describe()}")
-processed_factors, final_factor = process_multi_factors_nonlinear(factors,returns=ret)
-#print("处理后的因子统计："+f"{final_factor.shape} returns shape:{ret.shape}")
+processed_factors, final_factor = process_multi_factors_nonlinear(factors, returns=ret)
+print(f"/n=====处理后的最终因子统计： {final_factor.shape}")
 print(final_factor.describe())
 
 # 检查处理后的分布
@@ -109,15 +109,11 @@ print(final_factor.describe())
 # #plt.show()
 
 # %% 
-#plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
-#plt.show()
+plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
+plt.show()
 
-# %% 
-
-# # %%
-# # 7. 计算net_values_before_rebate
-# from util.alignment import alignment
-# final_factor, ret= alignment(final_factor,ret)
+# %% save final_factor
+final_factor.to_csv('factor_test_data/crypto/final_factor.csv')
 
 # %%
 net_values = cal_net_values(final_factor,ret)
@@ -128,7 +124,7 @@ plt.show()
 
 
 # %%
-# define position ratio == normalized_factor
+# calculate 净值
 net_values_before_rebte = cal_net_values_before_rebate(final_factor,ret)
 plt.plot(net_values_before_rebte.values)
 plt.title(final_factor.name+'before rebate')

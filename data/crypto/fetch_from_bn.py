@@ -2,10 +2,14 @@ import requests
 import sys
 import os
 import pandas as pd
-from util.date import date_to_utc_milliseconds
 
 project_root = "/Users/wanting/Downloads/multifactor_quant_learning"
 sys.path.append(project_root)
+
+
+
+from util.date import date_to_utc_milliseconds
+
 
 def get_klines(symbol, interval, start_time=None, end_time=None):
     url = "https://api.binance.com/api/v3/klines"
@@ -50,7 +54,7 @@ def fetch_all_klines(symbol, interval, start_time, end_time):
 
 # 示例调用
 symbol = 'BTCUSDT'  # 交易对
-interval = '30m'    # 时间间隔
+interval = '1h'    # 时间间隔
 start_time = date_to_utc_milliseconds("2018-01-01")  # 起始时间（毫秒）
 end_time = date_to_utc_milliseconds("2024-01-01")    # 结束时间（毫秒）
 
