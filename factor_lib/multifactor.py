@@ -34,10 +34,13 @@ from verify_risk_orthogonalization import process_multi_factors_nonlinear
 pd.plotting.register_matplotlib_converters()
 
 
-
+# %%
+# 0 data preprocess
+_period_minutes = 60
+_trading_hours = 24
 # %%
 #1. 读取行情数据
-z = pd.read_csv('data/crypto/BTC_USDT_day.csv',index_col=0)
+z = pd.read_csv(f'data/crypto/btcusdt_{_period_minutes}m.csv',index_col=0)
 import datetime
 #date_threshold = datetime.datetime(2020, 2, 1)
 #filtered_df = z[z.index > '2020-01-01']
@@ -51,6 +54,8 @@ from momentum_vol_factor import adaptive_momentum_factor
 bolling_band_factor = bolling_band_factor_generator(filtered_df)
 volatility_factor = calc_vol_mean_reversion_factor(filtered_df['close'])
 adaptive_momentum_factor = adaptive_momentum_factor(filtered_df)
+
+
 
 
 # %%
@@ -145,7 +150,7 @@ plt.show()
 # %%
 # 8. 计算annual夏普比率
 cleaned_net_values = net_values[~np.isnan(net_values)]
-sharp = cal_sharp_random(cleaned_net_values,period_minutes=15,trading_hours=4)
+sharp = cal_sharp_random(cleaned_net_values,period_minutes=_period_minutes,trading_hours=_trading_hours)
 
 print(f"Annualized Sharpe Ratio: {sharp:.4f}")
 

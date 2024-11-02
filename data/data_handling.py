@@ -1,22 +1,24 @@
 import os
+import pandas as pd
+import sys,os
+project_root = "/Users/wanting/Downloads/multifactor_quant_learning"
+sys.path.append(project_root)
 
-def rename_files_to_lowercase(directory):
-    # 遍历指定目录下的所有文件
-    for filename in os.listdir(directory):
-        # 构建完整的文件路径
-        old_file = os.path.join(directory, filename)
-        
-        # 检查是否是文件
-        if os.path.isfile(old_file):
-            # 生成新的文件名（小写）
-            new_file = os.path.join(directory, filename.lower())
+def convert_column_names_to_lowercase(folder_path):
+    # 遍历文件夹中的所有文件
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.csv'):
+            file_path = os.path.join(folder_path, filename)
+            # 读取 CSV 文件
+            df = pd.read_csv(file_path)
             
-            # 重命名文件
-            os.rename(old_file, new_file)
-            print(f'Renamed: {old_file} to {new_file}')
+            # 将列名转换为小写
+            df.columns = df.columns.str.lower()
+            
+            # 将修改后的 DataFrame 保存回 CSV 文件
+            df.to_csv(file_path, index=False)
+            print(f"Processed file: {filename}")
 
 # 指定 crypto 文件夹的路径
-crypto_directory = 'path/to/crypto'  # 替换为实际路径
-
-# 调用函数
-rename_files_to_lowercase(crypto_directory)
+folder_path = 'data/crypto'  # 请根据实际路径修改
+convert_column_names_to_lowercase(folder_path)
