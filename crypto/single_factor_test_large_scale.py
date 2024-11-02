@@ -84,9 +84,17 @@ def test_single_factor(factor_name, factor_data):
     # 计算净值
     net_values = cal_net_values(final_factor, ret)
     net_values.to_csv(f'reports/{z.name}_{factor_name}_net_values.csv')
-    plt.plot(net_values.values)
-    plt.title(f"Net Value of {factor_name}")
-    #plt.show()
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(net_values.index, net_values.values,label='Normalized Price Efficiency', color='blue')
+    plt.title(f'Net Value of {factor_name}')
+    plt.xlabel('Time (UTC)')
+    plt.ylabel('net value')
+    plt.legend()
+    plt.grid()
+    plt.xticks(rotation=45)  # 旋转 x 轴标签以便更好地显示
+    plt.tight_layout()  # 自动调整布局
+    plt.show()
     
     # 计算夏普比率
     cleaned_net_values = net_values[~np.isnan(net_values)]
