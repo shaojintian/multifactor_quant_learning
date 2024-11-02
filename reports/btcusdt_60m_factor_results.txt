@@ -1,0 +1,3 @@
+因子 bolling_band_factor 的年化夏普比率: 0.0003
+因子 volatility_factor 的年化夏普比率: 0.4268
+因子 adaptive_momentum_factor 的年化夏普比率: 0.4183

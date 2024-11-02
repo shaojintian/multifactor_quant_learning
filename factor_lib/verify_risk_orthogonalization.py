@@ -93,12 +93,12 @@ def process_multi_factors_nonlinear(factors_df:pd.DataFrame, returns:pd.Series ,
     # 1. 首先进行风险正交化
     orthogonal_factors = risk_orthogonalization(factors_df)
     orthogonal_factors.name = u'orthogonal_factor'
-    print(orthogonal_factors.describe())
+    #print(orthogonal_factors.describe())
     
     # 2. 处理正交化后的因子值
     processed_factors = process_orthogonalized_factors(orthogonal_factors)
     processed_factors.name = u'processed_factors'
-    print(processed_factors.describe())
+    #print(processed_factors.describe())
     #processed_factors.to_csv('factor_test_data/processed_factors.csv')
     
     # 3. model
