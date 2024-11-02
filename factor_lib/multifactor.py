@@ -36,11 +36,12 @@ pd.plotting.register_matplotlib_converters()
 
 # %%
 # 0 data preprocess
-_period_minutes = 30
+_period_minutes = 60
 _trading_hours = 24
 # %%
 #1. 读取行情数据
 z = pd.read_csv(f'data/crypto/btcusdt_{_period_minutes}m.csv',index_col=0)
+z.name = f"btcusdt_{_period_minutes}m"
 import datetime
 #date_threshold = datetime.datetime(2020, 2, 1)
 #filtered_df = z[z.index > '2020-01-01']
@@ -115,27 +116,39 @@ plt.show()
 
 # %% 因子转化为仓位,
 # 
-final_fictor = final_factor.fillna(0)
+final_factor = final_factor.fillna(0) * (-1)
 
 # %% save final_factor
 final_factor.to_csv('factor_test_data/crypto/final_factor.csv')
+ret.to_csv('factor_test_data/crypto/ret.csv')
 
-
-# %%
+#%% 因子转化为仓位,
+# final_pos = final_factor.to_numpy()
+# # 输出数组的特征
+# print("数组形状:", final_pos.shape)  # 数组的形状
+# print("数组数据类型:", final_pos.dtype)  # 数组的数据类型
+# print("数组最小值:", np.min(final_pos))  # 数组的最小值
+# print("数组最大值:", np.max(final_pos))  # 数组的最大值
+# print("数组均值:", np.mean(final_pos))  # 数组的均值
+# print("数组标准差:", np.std(final_pos))  # 数组的标准差
+# print("数组中位数:", np.median(final_pos))  # 数组的中位数
+# np.savetxt('factor_test_data/crypto/final_pos.txt', final_pos, delimiter=',')
+# %%  #
+# cal   calculate 净值
 
 net_values = cal_net_values(final_factor,ret)
 plt.plot(net_values.values)
-plt.title(final_factor.name)
+plt.title(f"{z.name} "+ final_factor.name)
 plt.grid(True)
 plt.show()
 
 
 
 # %%
-# calculate 净值
+# calculate 净值 before fee
 net_values_before_rebte = cal_net_values_before_rebate(final_factor,ret)
 plt.plot(net_values_before_rebte.values)
-plt.title(final_factor.name+'before rebate')
+plt.title(f"{z.name} "+final_factor.name+'before fee')
 plt.grid(True)
 plt.show()
 
