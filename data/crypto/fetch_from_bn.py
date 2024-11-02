@@ -59,4 +59,4 @@ all_klines_df = fetch_all_klines(symbol, interval, start_time, end_time)
 
 # 保存到CSV文件
 all_klines_df.to_csv(f'data/crypto/btcusdt_{interval}.csv', index=False)
-print("Data fetching complete.")
+print(f"Data fetching complete. length: {len(all_klines_df)}")
