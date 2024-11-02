@@ -20,7 +20,7 @@
 import os
 import sys
 # 正确的写法：
-project_root = "/Users/wanting/Downloads/multifactor_quant_learning"
+project_root = os.path.abspath("/Users/wanting/Downloads/multifactor_quant_learning")
 sys.path.append(project_root)
 
 import numpy as np
@@ -40,7 +40,7 @@ _period_minutes = 60
 _trading_hours = 24
 # %%
 #1. 读取行情数据
-z = pd.read_csv(f'data/crypto/btcusdt_{_period_minutes}m.csv',index_col=0)
+z = pd.read_csv(os.path.join(project_root, f'data/crypto/btcusdt_{_period_minutes}m.csv'),index_col=0)
 z.name = f"btcusdt_{_period_minutes}m"
 import datetime
 #date_threshold = datetime.datetime(2020, 2, 1)
@@ -116,11 +116,11 @@ plt.show()
 
 # %% 因子转化为仓位,
 # 
-final_factor = final_factor.fillna(0) * (-1)
+final_factor = final_factor.fillna(0) 
 
 # %% save final_factor
-final_factor.to_csv('factor_test_data/crypto/final_factor.csv')
-ret.to_csv('factor_test_data/crypto/ret.csv')
+final_factor.to_csv(os.path.join(project_root,'factor_test_data/crypto/final_factor.csv'))
+ret.to_csv(os.path.join(project_root,'factor_test_data/crypto/ret.csv'))
 
 #%% 因子转化为仓位,
 # final_pos = final_factor.to_numpy()
