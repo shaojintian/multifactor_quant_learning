@@ -23,12 +23,11 @@ def normalize_factor(factor: pd.Series, window: int = 2000) -> pd.Series:
     """
     # Check the length of the factor series
     if len(factor) < window:
-        # Use global mean and std if the series is smaller than the window
-        mean = factor.mean()
-        std = factor.std()
-        if std == 0:  # Avoid division by zero
-            return factor.clip(-3, 3)  # If std is zero, just clip the values
-        _factor = (factor - mean) / std
+         # 方法2：基于百分位数的缩放
+        upper = factor.quantile(0.9973)  # 3σ对应的概率约为99.73%
+        lower = factor.quantile(0.0027)
+        _factor = 6 * (factor - lower) / (upper - lower) - 3
+        _factor = _factor.clip(-3, 3)
     else:
         # Use rolling mean and std
         _factor = ((factor - factor.rolling(window=window).mean()) / factor.rolling(window=window).std()).clip(-3, 3)

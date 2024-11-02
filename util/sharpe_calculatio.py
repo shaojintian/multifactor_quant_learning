@@ -4,7 +4,7 @@ import numpy as np
 # 输入为每日净值序列
 def cal_sharp(net_values: np.array) -> float:
     '''计算夏普比率，risk free rate为无风险年化收益率，trading_days是1年的交易日'''
-    risk_free_rate = 0.05  # 无风险收益率
+    risk_free_rate = 0.03  # 无风险收益率
     trading_days = 252  # 一年的交易日
 
     # 计算收益率

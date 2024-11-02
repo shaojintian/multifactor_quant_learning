@@ -18,11 +18,11 @@ def risk_orthogonalization(factors: pd.DataFrame) -> pd.DataFrame:
     # 1. 计算相关性矩阵
     corr_matrix = factors.corr()
 
-    # #1.1 可视化因子相关性
-    # plt.figure(figsize=(10, 8))
-    # sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
-    # plt.title(u"factor correlation heatmap before orthogonalization")
-    # plt.show()
+    #1.1 可视化因子相关性
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
+    plt.title(u"factor correlation heatmap before orthogonalization")
+    plt.show()
     
     # 2. 特征值分解
     eigenvalues, eigenvectors = np.linalg.eigh(corr_matrix)
@@ -33,11 +33,11 @@ def risk_orthogonalization(factors: pd.DataFrame) -> pd.DataFrame:
         index=factors.index,
         columns=[f'orthogonal_factor_{i}' for i in range(len(factors.columns))]
     )
-    # #4. 可视化正交化前后的因子相关性
-    # plt.figure(figsize=(10, 8))
-    # sns.heatmap(orthogonal_factors.corr(), annot=True, cmap='coolwarm')
-    # plt.title(u"factor correlation heatmap after orthogonalization")
-    # plt.show()
+    #4. 可视化正交化前后的因子相关性
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(orthogonal_factors.corr(), annot=True, cmap='coolwarm')
+    plt.title(u"factor correlation heatmap after orthogonalization")
+    plt.show()
     return orthogonal_factors
 
 
@@ -48,7 +48,7 @@ def process_orthogonalized_factors(orthogonal_factors: pd.DataFrame) -> pd.DataF
     # 方法1：直接标准化后再截断
     def standardize_and_clip(series):
         if len(series) < 2000:
-            return percentile_scale(series)
+            raise ValueError("process_orthogonalized_factors Series length is less than 2000")
         normalized = (series - series.rolling(window=2000).mean()) / series.rolling(window=2000).std()
         return normalized.clip(-3, 3)
     
