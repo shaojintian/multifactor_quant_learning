@@ -33,8 +33,8 @@ def normalize_factor(factor: pd.Series, window: int = 2000) -> pd.Series:
         # Use rolling mean and std
         _factor = ((factor - factor.rolling(window=window).mean()) / factor.rolling(window=window).std()).clip(-3, 3)
 
-    print(_factor.describe())
-    return _factor
+    #print(_factor.describe())
+    return _factor.fillna(0)
 
 
 def discretize_factor(factor: pd.Series, step: float = 0.25) -> pd.Series:

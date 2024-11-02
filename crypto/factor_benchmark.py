@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr
 
-def permutation_test(x, y, n_permutations=100) -> float:
+def permutation_test(x:pd.Series, y:pd.Series, n_permutations=100) -> float:
     """执行置换检验以评估x和y之间的关系是否显著。
     -----------------------------------------
     Params:

@@ -49,6 +49,7 @@ from factor_lib.bolling_band_factor import bolling_band_factor_generator
 from factor_lib.volatility_factor import calc_vol_mean_reversion_factor
 from factor_lib.momentum_vol_factor import adaptive_momentum_factor
 from factor_lib.liquidity_factor import *
+from factor_benchmark import permutation_test
 
 # 生成因子
 bolling_band_factor = bolling_band_factor_generator(filtered_df)
@@ -100,39 +101,39 @@ def test_single_factor(factor_name, factor_data):
     cleaned_net_values = net_values[~np.isnan(net_values)]
     sharp = cal_sharp_random(cleaned_net_values, period_minutes=_period_minutes, trading_hours=_trading_hours)
     
+    # 计算p值
+    p_value = permutation_test(final_factor, ret, n_permutations=1000)
     # 可视化
     #plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
     #plt.title(f"Histogram of {factor_name}")
     #plt.show()
     
-    return sharp, final_factor.describe()
+    return sharp, p_value
 
 # %%
 # 对每个因子进行测试
 factors = {
     'bolling_band_factor': bolling_band_factor,
-    # 'volatility_factor': volatility_factor,
-    # 'adaptive_momentum_factor': adaptive_momentum_factor,
-    # 'normalized_volatility_adjusted_momentum': normalized_volatility_adjusted_momentum,
-    # 'normalized_volume_weighted_momentum': normalized_volume_weighted_momentum,
+    'volatility_factor': volatility_factor,
+    'adaptive_momentum_factor': adaptive_momentum_factor,
+    'normalized_volatility_adjusted_momentum': normalized_volatility_adjusted_momentum,
+    'normalized_volume_weighted_momentum': normalized_volume_weighted_momentum,
     'normalized_buy_pressure': normalized_buy_pressure,
-    # 'normalized_price_efficiency': normalized_price_efficiency,
-    # 'normalized_price_volume_divergence': normalized_price_volume_divergence,
+    'normalized_price_efficiency': normalized_price_efficiency,
+    'normalized_price_volume_divergence': normalized_price_volume_divergence,
     'normalized_volatility_regime': normalized_volatility_regime,
-    # 'normalized_trade_activity': normalized_trade_activity,
-    # 'normalized_price_strength': normalized_price_strength,
+    'normalized_trade_activity': normalized_trade_activity,
+    'normalized_price_strength': normalized_price_strength,
     'normalized_volume_imbalance': normalized_volume_imbalance,
-    # 'normalized_multi_period_momentum': normalized_multi_period_momentum
+    'normalized_multi_period_momentum': normalized_multi_period_momentum
 }
 
 # 打开文件以写入结果
 with open(f'reports/{z.name}_factor_results.txt', 'w') as f:
     for name, data in factors.items():
-        sharp_ratio, description = test_single_factor(name, data)
+        sharp_ratio, p_value = test_single_factor(name, data)
         # 将结果写入文件
-        f.write(f"因子 {name} 的年化夏普比率: {sharp_ratio:.4f} \n")
-
-        #f.write(f"因子 {name} 的描述统计: \n{description}\n\n")
+        f.write(f"因子 {name} 的年化夏普比率: {sharp_ratio:.4f}     p值: {p_value:.4f}\n")
 
 # %% save final_factor
 # 这里可以选择是否保存最终因子

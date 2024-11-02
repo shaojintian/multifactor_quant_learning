@@ -1,4 +1,13 @@
-因子 bolling_band_factor 的年化夏普比率: 0.5270 
-因子 normalized_buy_pressure 的年化夏普比率: 0.1047 
-因子 normalized_volatility_regime 的年化夏普比率: 0.2122 
-因子 normalized_volume_imbalance 的年化夏普比率: 0.1003 
+因子 bolling_band_factor 的年化夏普比率: 0.5161     p值: 0.0180
+因子 volatility_factor 的年化夏普比率: 0.4879     p值: 0.0590
+因子 adaptive_momentum_factor 的年化夏普比率: -0.2642     p值: 0.4060
+因子 normalized_volatility_adjusted_momentum 的年化夏普比率: 0.0583     p值: 0.2630
+因子 normalized_volume_weighted_momentum 的年化夏普比率: 0.2425     p值: 0.2500
+因子 normalized_buy_pressure 的年化夏普比率: 0.0925     p值: 0.3680
+因子 normalized_price_efficiency 的年化夏普比率: 0.3830     p值: 0.0000
+因子 normalized_price_volume_divergence 的年化夏普比率: 0.5782     p值: 0.0410
+因子 normalized_volatility_regime 的年化夏普比率: 0.2006     p值: 0.0970
+因子 normalized_trade_activity 的年化夏普比率: -0.1548     p值: 0.0090
+因子 normalized_price_strength 的年化夏普比率: -0.3745     p值: 0.0000
+因子 normalized_volume_imbalance 的年化夏普比率: 0.0882     p值: 0.3760
+因子 normalized_multi_period_momentum 的年化夏普比率: -0.0311     p值: 0.4590

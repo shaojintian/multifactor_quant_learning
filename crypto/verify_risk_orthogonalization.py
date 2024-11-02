@@ -21,7 +21,7 @@ def risk_orthogonalization(factors: pd.DataFrame) -> pd.DataFrame:
     #1.1 可视化因子相关性
     plt.figure(figsize=(10, 8))
     sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
-    plt.title(" 可视化正交化前的因子相关性")
+    plt.title(u"factor correlation heatmap before orthogonalization")
     plt.show()
     
     # 2. 特征值分解
@@ -36,7 +36,7 @@ def risk_orthogonalization(factors: pd.DataFrame) -> pd.DataFrame:
     #4. 可视化正交化前后的因子相关性
     plt.figure(figsize=(10, 8))
     sns.heatmap(orthogonal_factors.corr(), annot=True, cmap='coolwarm')
-    plt.title(" 可视化正交化后的因子相关性")
+    plt.title(u"factor correlation heatmap after orthogonalization")
     plt.show()
     return orthogonal_factors
 
@@ -47,7 +47,7 @@ def process_orthogonalized_factors(orthogonal_factors: pd.DataFrame) -> pd.DataF
     """
     # 方法1：直接标准化后再截断
     def standardize_and_clip(series):
-        if series.lengthth < 2000:
+        if len(series) < 2000:
             raise ValueError("process_orthogonalized_factors Series length is less than 2000")
         normalized = (series - series.rolling(window=2000).mean()) / series.rolling(window=2000).std()
         return normalized.clip(-3, 3)

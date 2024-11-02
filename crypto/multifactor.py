@@ -125,7 +125,7 @@ plt.show()
 
 # %% 因子转化为仓位,
 # 
-final_factor = final_factor.dropna()
+final_factor = final_factor.fillna(0)
 
 # %% save final_factor
 final_factor.to_csv(os.path.join(project_root,'factor_test_data/crypto/final_factor.csv'))
