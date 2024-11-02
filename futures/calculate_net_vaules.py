@@ -19,6 +19,13 @@ def cal_net_values(pos: pd.Series, ret: pd.Series) -> pd.Series:
     # 计算净值
     net_values = 1 + (pos * ret - np.abs(position_changes) * fee).cumsum()
 
+    # error net vaule
+    if net_values.iloc[-1] >100 :
+        print('error net value')
+        err_data = pd.DataFrame({'pos': pos, 'ret': ret})
+        err_data.to_csv(f'factor_test_data/futures/error_net_values_{pos.name}.csv')
+        return pd.Series(1, index=net_values.index)
+
     #fill 1
     net_values = net_values.dropna()
     return net_values  # 返回净值序列

@@ -187,7 +187,8 @@ def decay_linear(df, period=10):
 
 
 def get_alpha(df):
-        stock=Alphas(df)
+        _df = df.copy()
+        stock=Alphas(_df)
         df['alpha001']=stock.alpha001() 
         df['alpha002']=stock.alpha002()
         df['alpha003']=stock.alpha003()
@@ -293,41 +294,42 @@ class Alphas(object):
     def alpha001(self):
         inner = self.close
         inner[self.returns < 0] = stddev(self.returns, 20)
-        return normalize_factor(rank(ts_argmax(inner ** 2, 5)))
+        return rank(ts_argmax(inner ** 2, 5))
     
     # Alpha#2	 (-1 * correlation(rank(delta(log(volume), 2)), rank(((close - open) / open)), 6))
     def alpha002(self):
         df = -1 * correlation(rank(delta(log(self.volume), 2)), rank((self.close - self.open) / self.open), 6)
-        return normalize_factor(df.replace([-np.inf, np.inf], 0).fillna(value=0))
+        return df.replace([-np.inf, np.inf], 0).fillna(value=0)
     
     # Alpha#3	 (-1 * correlation(rank(open), rank(volume), 10))
     def alpha003(self):
         df = -1 * correlation(rank(self.open), rank(self.volume), 10)
-        return normalize_factor(df.replace([-np.inf, np.inf], 0).fillna(value=0))
+        return df.replace([-np.inf, np.inf], 0).fillna(value=0)
     
     # Alpha#4	 (-1 * Ts_Rank(rank(low), 9))
     def alpha004(self):
-        return normalize_factor(-1 * ts_rank(rank(self.low), 9))
+        return -1 * ts_rank(rank(self.low), 9)
     
     # Alpha#5	 (rank((open - (sum(vwap, 10) / 10))) * (-1 * abs(rank((close - vwap)))))
     def alpha005(self):
-        return normalize_factor((rank((self.open - (sum(self.vwap, 10) / 10))) * (-1 * abs(rank((self.close - self.vwap)))))
+        return  (rank((self.open - (sum(self.vwap, 10) / 10))) * (-1 * abs(rank((self.close - self.vwap)))))
     
     # Alpha#6	 (-1 * correlation(open, volume, 10))
     def alpha006(self):
         df = -1 * correlation(self.open, self.volume, 10)
-        return normalize_factor(df.replace([-np.inf, np.inf], 0).fillna(value=0))
+        return df.replace([-np.inf, np.inf], 0).fillna(value=0)
     
     # Alpha#7	 ((adv20 < volume) ? ((-1 * ts_rank(abs(delta(close, 7)), 60)) * sign(delta(close, 7))) : (-1* 1))
     def alpha007(self):
         adv20 = sma(self.volume, 20)
         alpha = -1 * ts_rank(abs(delta(self.close, 7)), 60) * sign(delta(self.close, 7))
         alpha[adv20 >= self.volume] = -1
-        return normalize_factor(alpha)
+        return alpha
     
     # Alpha#8	 (-1 * rank(((sum(open, 5) * sum(returns, 5)) - delay((sum(open, 5) * sum(returns, 5)),10))))
     def alpha008(self):
-        return normalize_factor(-1 * (rank(((ts_sum(self.open, 5) * ts_sum(self.returns, 5)) - delay((ts_sum(self.open, 5) * ts_sum(self.returns, 5)), 10))))
+        return -1 * (rank(((ts_sum(self.open, 5) * ts_sum(self.returns, 5)) -
+                           delay((ts_sum(self.open, 5) * ts_sum(self.returns, 5)), 10))))
     
     # Alpha#9	 ((0 < ts_min(delta(close, 1), 5)) ? delta(close, 1) : ((ts_max(delta(close, 1), 5) < 0) ?delta(close, 1) : (-1 * delta(close, 1))))
     def alpha009(self):
@@ -336,7 +338,7 @@ class Alphas(object):
         cond_2 = ts_max(delta_close, 5) < 0
         alpha = -1 * delta_close
         alpha[cond_1 | cond_2] = delta_close
-        return normalize_factor(alpha)
+        return alpha
     
     # Alpha#10	 rank(((0 < ts_min(delta(close, 1), 4)) ? delta(close, 1) : ((ts_max(delta(close, 1), 4) < 0)? delta(close, 1) : (-1 * delta(close, 1)))))
     def alpha010(self):
@@ -468,7 +470,7 @@ class Alphas(object):
     def alpha030(self):
         delta_close = delta(self.close, 1)
         inner = sign(delta_close) + sign(delay(delta_close, 1)) + sign(delay(delta_close, 2))
-        return ((1.0 - rank(inner)) * ts_sum(self.volume, 5)) / ts_sum(self.volume, 20))
+        return ((1.0 - rank(inner)) * ts_sum(self.volume, 5)) / ts_sum(self.volume, 20)
 
     # Alpha#31	 ((rank(rank(rank(decay_linear((-1 * rank(rank(delta(close, 10)))), 10)))) + rank((-1 *delta(close, 3)))) + sign(scale(correlation(adv20, low, 12))))
     def alpha031(self):
@@ -792,9 +794,9 @@ class Alphas(object):
         # return df['min']
         alpha = pd.Series(np.zeros_like(self.close), index=self.open_time)
         return alpha
-        #return min(rank(decay_linear(((rank(self.open) + rank(self.low)) - (rank(self.high) + rank(self.close)).to_frame(),8).CLOSE, ts_rank(decay_linear(correlation(ts_rank(self.close, 8), ts_rank(adv60,20.6966), 8).to_frame(), 7).CLOSE, 3))
+        #return min(rank(decay_linear(((rank(self.open) + rank(self.low)) - (rank(self.high) + rank(self.close))).to_frame(),8).CLOSE), ts_rank(decay_linear(correlation(ts_rank(self.close, 8), ts_rank(adv60,20.6966), 8).to_frame(), 7).CLOSE, 3))
     
-    # Alpha#89	 (Ts_Rank(decay_linear(correlation(((low * 0.967285) + (low * (1 - 0.967285))), adv10,6.94279), 5.51607) - Ts_Rank(decay_linear(delta(IndNeutralize(vwap,IndClass.industry), 3.48158), 10.1466), 15.3012))
+    # Alpha#89	 (Ts_Rank(decay_linear(correlation(((low * 0.967285) + (low * (1 - 0.967285))), adv10,6.94279), 5.51607), 3.79744) - Ts_Rank(decay_linear(delta(IndNeutralize(vwap,IndClass.industry), 3.48158), 10.1466), 15.3012))
      
     # Alpha#90	 ((rank((close - ts_max(close, 4.66719)))^Ts_Rank(correlation(IndNeutralize(adv40,IndClass.subindustry), low, 5.38375), 3.21856)) * -1)
      
@@ -820,12 +822,12 @@ class Alphas(object):
     # Alpha#94	 ((rank((vwap - ts_min(vwap, 11.5783)))^Ts_Rank(correlation(Ts_Rank(vwap,19.6462), Ts_Rank(adv60, 4.02992), 18.0926), 2.70756)) * -1)
     def alpha094(self):
         adv60 = sma(self.volume, 60)
-        return ((rank((self.vwap - ts_min(self.vwap, 11.5783))).pow(ts_rank(correlation(ts_rank(self.vwap,19.6462), ts_rank(adv60, 4.02992), 18.0926), 2.70756)) * -1)
+        return ((rank((self.vwap - ts_min(self.vwap, 12))).pow(ts_rank(correlation(ts_rank(self.vwap,20), ts_rank(adv60, 4), 18), 3)) * -1))
     
     # Alpha#95	 (rank((open - ts_min(open, 12.4105))) < Ts_Rank((rank(correlation(sum(((high + low)/ 2), 19.1351), sum(adv40, 19.1351), 12.8742))^5), 11.7584))
     def alpha095(self):
         adv40 = sma(self.volume, 40)
-        return (rank((self.open - ts_min(self.open, 12))) < ts_rank((rank(correlation(sma(((self.high + self.low)/ 2), 19), sma(adv40, 19), 13)).pow(5), 12))
+        return (rank((self.open - ts_min(self.open, 12))) < ts_rank((rank(correlation(sma(((self.high + self.low)/ 2), 19), sma(adv40, 19), 13)).pow(5)), 12))
     
     # Alpha#96	 (max(Ts_Rank(decay_linear(correlation(rank(vwap), rank(volume), 3.83878),4.16783), 8.38151), Ts_Rank(decay_linear(Ts_ArgMax(correlation(Ts_Rank(close, 7.45404),Ts_Rank(adv60, 4.13242), 3.65459), 12.6556), 14.0365), 13.4143)) * -1)
     def alpha096(self):
@@ -847,7 +849,7 @@ class Alphas(object):
     def alpha098(self):
         # adv5 = sma(self.volume, 5)
         # adv15 = sma(self.volume, 15)
-        # return (rank(decay_linear(correlation(self.vwap, sma(adv5, 26), 5).to_frame(), 7).CLOSE -rank(decay_linear(ts_rank(ts_argmin(correlation(rank(self.open), rank(adv15), 21), 9),7).to_frame(), 8).CLOSE))
+        # return (rank(decay_linear(correlation(self.vwap, sma(adv5, 26), 5).to_frame(), 7).CLOSE) -rank(decay_linear(ts_rank(ts_argmin(correlation(rank(self.open), rank(adv15), 21), 9),7).to_frame(), 8).CLOSE))
         alpha = pd.Series(np.zeros_like(self.close), index=self.open_time)
         return alpha
     # Alpha#99	 ((rank(correlation(sum(((high + low) / 2), 19.8975), sum(adv60, 19.8975), 8.8136)) <rank(correlation(low, volume, 6.28259))) * -1)
@@ -855,7 +857,7 @@ class Alphas(object):
         adv60 = sma(self.volume, 60)
         return ((rank(correlation(ts_sum(((self.high + self.low) / 2), 20), ts_sum(adv60, 20), 9)) <rank(correlation(self.low, self.volume, 6))) * -1)
     
-    # Alpha#100	 (0 - (1 * (((1.5 * scale(rank(((((close - low) - (high -close)) / (high - low)) * volume)))) -scale(rank(ts_argmax(close, 10))))))
+    # Alpha#100	 (0 - (1 * (((1.5 * scale(indneutralize(indneutralize(rank(((((close - low) - (high -close)) / (high - low)) * volume)), IndClass.subindustry), IndClass.subindustry))) -scale(indneutralize((correlation(close, rank(adv20), 5) - rank(ts_argmin(close, 30))),IndClass.subindustry))) * (volume / adv20))))
      
 
     # Alpha#101	 ((close - open) / ((high - low) + .001))

@@ -45,6 +45,12 @@ z = pd.read_csv(os.path.join(project_root,f'data/commodities_data/{name}'), inde
 z.name = name
 filtered_df = z
 
+#2.计算行情收益率
+print(filtered_df['close'].describe())
+ret = filtered_df['close'].pct_change().shift(-1).fillna(0)
+ret.name = 'next returns'
+print(ret.describe())
+
 # %%
 from factor_lib.bolling_band_factor import bolling_band_factor_generator
 from factor_lib.volatility_factor import calc_vol_mean_reversion_factor
@@ -70,9 +76,6 @@ normalized_multi_period_momentum = multi_period_momentum(filtered_df)
 alphas = get_alpha(filtered_df)
 
 # %%
-# 6. 计算行情收益率
-ret = filtered_df['close'].pct_change().shift(-1).fillna(0)
-#print(ret.describe())
 
 # %%
 # 定义单因子测试函数
@@ -87,6 +90,7 @@ def test_single_factor(factor_name, factor_data):
     final_factor.to_csv(f'reports/{z.name}_{factor_name}_factor.csv')
     # 计算净值
     net_values = cal_net_values(final_factor, ret)
+    
 
     #保存净值，脚本画图
     net_values.to_csv(f'reports/{z.name}_{factor_name}_net_values.csv')
@@ -131,31 +135,37 @@ factors = {
     'normalized_price_strength': normalized_price_strength,
     'normalized_volume_imbalance': normalized_volume_imbalance,
     'normalized_multi_period_momentum': normalized_multi_period_momentum,
-    'alpha047': normalize_factor(alphas['alpha047']),
-    'alpha037': normalize_factor(alphas['alpha047']),
-    'alpha038': normalize_factor(alphas['alpha047']),
-    'alpha049': normalize_factor(alphas['alpha047']),
-    'alpha041': normalize_factor(alphas['alpha047']),
-    'alpha025': normalize_factor(alphas['alpha047']), 
+    # 'alpha047': normalize_factor(alphas['alpha047']),
+    # 'alpha037': normalize_factor(alphas['alpha037']),
+    # 'alpha038': normalize_factor(alphas['alpha038']),
+    # 'alpha049': normalize_factor(alphas['alpha049']),
+    # 'alpha041': normalize_factor(alphas['alpha041']),
+    # 'alpha025': normalize_factor(alphas['alpha025']), 
 }
-# alpha_dict = {}
-# for i in range(1, 101):
-#     try:
-#         alpha_dict[f'alpha{i:03}'] = normalize_factor(alphas[f'alpha{i:03}']) 
-#     except:
-#         alpha_dict[f'alpha{i:03}'] = pd.Series() # Accessing the alphas dictionary
-# factors.update(alpha_dict)
+alpha_dict = {}
+for i in range(1, 101):
+    try:
+        alpha_dict[f'alpha{i:03}'] = normalize_factor(alphas[f'alpha{i:03}']) 
+    except:
+        alpha_dict[f'alpha{i:03}'] = pd.Series() # Accessing the alphas dictionary
+factors.update(alpha_dict)
 
 
-# 打开文件以写入结果
-with open(f'reports/{z.name}_factor_results.txt', 'w') as f:
-    for name, data in factors.items():
-        if data.empty:
-            continue
-        sharp_ratio, p_value = test_single_factor(name, data)
-        # 将结果写入文件
-        f.write(f"因子 {name} 的年化夏普比率: {sharp_ratio:.4f}     p值: {p_value:.4f}\n")
-    print("report saved=====================\n")
+# %%
+# 创建一个空的 DataFrame 来存储结果
+results = []
+for name, data in factors.items():
+    if data.empty:
+        continue
+    sharp_ratio, p_value = test_single_factor(name, data)
+    # 将结果添加到列表中
+    results.append({'因子': name, '年化夏普比率': sharp_ratio, 'p值': p_value})
+# 将结果转换为 DataFrame
+results_df = pd.DataFrame(results)
+
+# 保存为 CSV 文件
+results_df.to_csv(f'reports/{z.name}_factor_results.csv', index=False, encoding='utf-8-sig')  # 使用 utf-8-sig 编码以支持中文字符
+print("report saved=====================\n")
 
 # %% save final_factor
 # 这里可以选择是否保存最终因子
