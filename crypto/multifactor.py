@@ -49,9 +49,9 @@ filtered_df = z
 #z.head()
 
 # %%
-from bolling_band_factor import bolling_band_factor_generator
-from volatility_factor import calc_vol_mean_reversion_factor
-from momentum_vol_factor import adaptive_momentum_factor
+from factor_lib.bolling_band_factor import bolling_band_factor_generator
+from factor_lib.volatility_factor import calc_vol_mean_reversion_factor
+from factor_lib.momentum_vol_factor import adaptive_momentum_factor
 bolling_band_factor = bolling_band_factor_generator(filtered_df)
 volatility_factor = calc_vol_mean_reversion_factor(filtered_df['close'])
 adaptive_momentum_factor = adaptive_momentum_factor(filtered_df)
