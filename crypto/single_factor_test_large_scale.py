@@ -80,11 +80,13 @@ def test_single_factor(factor_name, factor_data):
     print(f"处理因子: {factor_name}")
     #processed_factors, final_factor = process_multi_factors_nonlinear(factors, returns=ret)
     final_factor = factor_data
+    #final_factor.to_csv(f'reports/{z.name}_{factor_name}_factor.csv')
     # 计算净值
     net_values = cal_net_values(final_factor, ret)
+    net_values.to_csv(f'reports/{z.name}_{factor_name}_net_values.csv')
     plt.plot(net_values.values)
     plt.title(f"Net Value of {factor_name}")
-    plt.show()
+    #plt.show()
     
     # 计算夏普比率
     cleaned_net_values = net_values[~np.isnan(net_values)]
@@ -121,7 +123,8 @@ with open(f'reports/{z.name}_factor_results.txt', 'w') as f:
         sharp_ratio, description = test_single_factor(name, data)
         # 将结果写入文件
         f.write(f"因子 {name} 的年化夏普比率: {sharp_ratio:.4f} \n")
-        f.write(f"因子 {name} 的描述统计: \n{description}\n\n")
+
+        #f.write(f"因子 {name} 的描述统计: \n{description}\n\n")
 
 # %% save final_factor
 # 这里可以选择是否保存最终因子

@@ -4,5 +4,5 @@
 反转因子：
 波动率因子：
 流动性因子：
-技术因子: bolling,atr,rsi
+技术因子: bolling,atr,rsi,变动速率
 成交分布因子:

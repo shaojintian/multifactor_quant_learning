@@ -19,6 +19,8 @@ def cal_net_values(pos: pd.Series, ret: pd.Series) -> pd.Series:
     # 计算净值
     net_values = 1 + (pos * ret - np.abs(position_changes) * fee).cumsum()
     
+    #fill 1
+    net_values = net_values.fillna(method='ffill')
     return net_values  # 返回净值序列
 
 def cal_net_values_before_rebate(pos: pd.Series, ret: pd.Series) -> pd.Series:
@@ -32,4 +34,7 @@ def cal_net_values_before_rebate(pos: pd.Series, ret: pd.Series) -> pd.Series:
     # 计算净值
     net_values = 1 + (pos * ret).cumsum()
     #net_values = 1 + (pos * ret).cumsum()
+
+     #fill 1
+    net_values = net_values.fillna(method='ffill')
     return net_values  # 返回净值序列
