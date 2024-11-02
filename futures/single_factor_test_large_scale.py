@@ -131,12 +131,12 @@ factors = {
     'normalized_price_strength': normalized_price_strength,
     'normalized_volume_imbalance': normalized_volume_imbalance,
     'normalized_multi_period_momentum': normalized_multi_period_momentum,
-    'alpha047': alphas['alpha047'],
-    'alpha037': alphas['alpha037'],
-    'alpha038': alphas['alpha038'],
-    'alpha049': alphas['alpha049'],
-    'alpha041': alphas['alpha041'],
-    'alpha025': alphas['alpha025'], 
+    'alpha047': normalize_factor(alphas['alpha047']),
+    'alpha037': normalize_factor(alphas['alpha047']),
+    'alpha038': normalize_factor(alphas['alpha047']),
+    'alpha049': normalize_factor(alphas['alpha047']),
+    'alpha041': normalize_factor(alphas['alpha047']),
+    'alpha025': normalize_factor(alphas['alpha047']), 
 }
 # alpha_dict = {}
 # for i in range(1, 101):
