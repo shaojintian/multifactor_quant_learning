@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from model.random_forest import combine_factors_nonlinear
+import seaborn as sns
+from matplotlib import pyplot as plt
 from util.norm import normalize_factor
 from util.decorator import print_variable_shapes
 
@@ -15,6 +17,12 @@ def risk_orthogonalization(factors: pd.DataFrame) -> pd.DataFrame:
     """
     # 1. 计算相关性矩阵
     corr_matrix = factors.corr()
+
+    #1.1 可视化因子相关性
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
+    plt.title(" 可视化正交化前的因子相关性")
+    plt.show()
     
     # 2. 特征值分解
     eigenvalues, eigenvectors = np.linalg.eigh(corr_matrix)
@@ -25,7 +33,11 @@ def risk_orthogonalization(factors: pd.DataFrame) -> pd.DataFrame:
         index=factors.index,
         columns=[f'orthogonal_factor_{i}' for i in range(len(factors.columns))]
     )
-    
+    #4. 可视化正交化前后的因子相关性
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(orthogonal_factors.corr(), annot=True, cmap='coolwarm')
+    plt.title(" 可视化正交化后的因子相关性")
+    plt.show()
     return orthogonal_factors
 
 
@@ -57,7 +69,7 @@ def process_orthogonalized_factors(orthogonal_factors: pd.DataFrame) -> pd.DataF
     # 对每个正交化后的因子进行处理
     for col in orthogonal_factors.columns:
         # 选择其中一种方法应用
-        processed_factors[col] = percentile_scale(orthogonal_factors[col])
+        processed_factors[col] = standardize_and_clip(orthogonal_factors[col])
         
     return processed_factors
 
@@ -85,7 +97,7 @@ def process_multi_factors_linear(factors: pd.DataFrame) -> pd.DataFrame:
     
     return processed_factors, final_factor
 
-@print_variable_shapes
+
 def process_multi_factors_nonlinear(factors_df:pd.DataFrame, returns:pd.Series ,model_type='xgboost') -> pd.DataFrame:
     """
     完整的多因子处理流程

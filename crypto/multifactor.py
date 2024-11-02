@@ -80,18 +80,18 @@ print(ret.describe())
 #多个因子的风险正交
 factors = pd.DataFrame({
     'bolling_band_factor': bolling_band_factor,
-    # # 'volatility_factor': volatility_factor,
-    # # 'adaptive_momentum_factor': adaptive_momentum_factor,
-    # # 'normalized_volatility_adjusted_momentum': normalized_volatility_adjusted_momentum,
-    # # 'normalized_volume_weighted_momentum': normalized_volume_weighted_momentum,
-    # 'normalized_buy_pressure': normalized_buy_pressure,
-    # # 'normalized_price_efficiency': normalized_price_efficiency,
-    # # 'normalized_price_volume_divergence': normalized_price_volume_divergence,
-    # 'normalized_volatility_regime': normalized_volatility_regime,
-    # # 'normalized_trade_activity': normalized_trade_activity,
-    # # 'normalized_price_strength': normalized_price_strength,
-    # 'normalized_volume_imbalance': normalized_volume_imbalance,
-    # # 'normalized_multi_period_momentum': normalized_multi_period_momentum
+    # 'volatility_factor': volatility_factor,
+    # 'adaptive_momentum_factor': adaptive_momentum_factor,
+    # 'normalized_volatility_adjusted_momentum': normalized_volatility_adjusted_momentum,
+    # 'normalized_volume_weighted_momentum': normalized_volume_weighted_momentum,
+    'normalized_buy_pressure': normalized_buy_pressure,
+    # 'normalized_price_efficiency': normalized_price_efficiency,
+    # 'normalized_price_volume_divergence': normalized_price_volume_divergence,
+    'normalized_volatility_regime': normalized_volatility_regime,
+    # 'normalized_trade_activity': normalized_trade_activity,
+    # 'normalized_price_strength': normalized_price_strength,
+    'normalized_volume_imbalance': normalized_volume_imbalance,
+    # 'normalized_multi_period_momentum': normalized_multi_period_momentum
 })
 
 
@@ -125,7 +125,7 @@ plt.show()
 
 # %% 因子转化为仓位,
 # 
-final_factor = final_factor.fillna(0) 
+final_factor = final_factor.dropna()
 
 # %% save final_factor
 final_factor.to_csv(os.path.join(project_root,'factor_test_data/crypto/final_factor.csv'))
