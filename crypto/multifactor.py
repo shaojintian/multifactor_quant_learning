@@ -60,22 +60,10 @@ adaptive_momentum_factor = adaptive_momentum_factor(filtered_df)
 
 
 # %%
-# v    
-#volatility_factor
-factors = [
-    bolling_band_factor,
-    volatility_factor,
-    adaptive_momentum_factor
-]
-
-# %%
 # 6. 计算行情收益率
 ret = filtered_df['close'].pct_change().shift(-1).fillna(0)
 print(ret.describe())
 
-# %%
-#### 3.进行风险正交
-from verify_risk_orthogonalization import risk_orthogonalization
 #factor = volatility_factor
 
 #多个因子的风险正交
@@ -122,17 +110,6 @@ final_factor = final_factor.fillna(0)
 final_factor.to_csv(os.path.join(project_root,'factor_test_data/crypto/final_factor.csv'))
 ret.to_csv(os.path.join(project_root,'factor_test_data/crypto/ret.csv'))
 
-#%% 因子转化为仓位,
-# final_pos = final_factor.to_numpy()
-# # 输出数组的特征
-# print("数组形状:", final_pos.shape)  # 数组的形状
-# print("数组数据类型:", final_pos.dtype)  # 数组的数据类型
-# print("数组最小值:", np.min(final_pos))  # 数组的最小值
-# print("数组最大值:", np.max(final_pos))  # 数组的最大值
-# print("数组均值:", np.mean(final_pos))  # 数组的均值
-# print("数组标准差:", np.std(final_pos))  # 数组的标准差
-# print("数组中位数:", np.median(final_pos))  # 数组的中位数
-# np.savetxt('factor_test_data/crypto/final_pos.txt', final_pos, delimiter=',')
 # %%  #
 # cal   calculate 净值
 

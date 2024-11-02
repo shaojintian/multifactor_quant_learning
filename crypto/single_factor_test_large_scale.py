@@ -40,7 +40,7 @@ _trading_hours = 24
 
 # %%
 # 1. 读取行情数据
-z = pd.read_csv(f'data/crypto/btcusdt_{_period_minutes}m.csv', index_col=0)
+z = pd.read_csv(os.path.join(project_root,f'data/crypto/btcusdt_{_period_minutes}m.csv'), index_col=0)
 z.name = f"btcusdt_{_period_minutes}m"
 filtered_df = z
 
@@ -48,11 +48,22 @@ filtered_df = z
 from factorlib.bolling_band_factor import bolling_band_factor_generator
 from factorlib.volatility_factor import calc_vol_mean_reversion_factor
 from factorlib.momentum_vol_factor import adaptive_momentum_factor
+from factorlib.liquidity_factor import *
 
 # 生成因子
 bolling_band_factor = bolling_band_factor_generator(filtered_df)
 volatility_factor = calc_vol_mean_reversion_factor(filtered_df['close'])
 adaptive_momentum_factor = adaptive_momentum_factor(filtered_df)
+normalized_volatility_adjusted_momentum = volatility_adjusted_momentum(filtered_df)
+normalized_volume_weighted_momentum = volume_weighted_momentum(filtered_df)
+normalized_buy_pressure = buy_pressure(filtered_df)
+normalized_price_efficiency = price_efficiency(filtered_df)
+normalized_price_volume_divergence = price_volume_divergence(filtered_df)
+normalized_volatility_regime = volatility_regime(filtered_df)
+normalized_trade_activity = trade_activity(filtered_df)
+normalized_price_strength = price_strength(filtered_df)
+normalized_volume_imbalance = volume_imbalance(filtered_df)
+normalized_multi_period_momentum = multi_period_momentum(filtered_df)
 
 # %%
 # 6. 计算行情收益率
@@ -79,7 +90,7 @@ def test_single_factor(factor_name, factor_data):
     # 可视化
     plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
     plt.title(f"Histogram of {factor_name}")
-    #plt.show()
+    plt.show()
     
     return sharp, final_factor.describe()
 
@@ -88,7 +99,17 @@ def test_single_factor(factor_name, factor_data):
 factors = {
     'bolling_band_factor': bolling_band_factor,
     'volatility_factor': volatility_factor,
-    'adaptive_momentum_factor': adaptive_momentum_factor
+    'adaptive_momentum_factor': adaptive_momentum_factor,
+    'normalized_volatility_adjusted_momentum': normalized_volatility_adjusted_momentum,
+    'normalized_volume_weighted_momentum': normalized_volume_weighted_momentum,
+    'normalized_buy_pressure': normalized_buy_pressure,
+    'normalized_price_efficiency': normalized_price_efficiency,
+    'normalized_price_volume_divergence': normalized_price_volume_divergence,
+    'normalized_volatility_regime': normalized_volatility_regime,
+    'normalized_trade_activity': normalized_trade_activity,
+    'normalized_price_strength': normalized_price_strength,
+    'normalized_volume_imbalance': normalized_volume_imbalance,
+    'normalized_multi_period_momentum': normalized_multi_period_momentum
 }
 
 # 打开文件以写入结果
