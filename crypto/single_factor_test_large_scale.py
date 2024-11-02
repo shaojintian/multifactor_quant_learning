@@ -45,10 +45,10 @@ z.name = f"btcusdt_{_period_minutes}m"
 filtered_df = z
 
 # %%
-from factorlib.bolling_band_factor import bolling_band_factor_generator
-from factorlib.volatility_factor import calc_vol_mean_reversion_factor
-from factorlib.momentum_vol_factor import adaptive_momentum_factor
-from factorlib.liquidity_factor import *
+from factor_lib.bolling_band_factor import bolling_band_factor_generator
+from factor_lib.volatility_factor import calc_vol_mean_reversion_factor
+from factor_lib.momentum_vol_factor import adaptive_momentum_factor
+from factor_lib.liquidity_factor import *
 
 # 生成因子
 bolling_band_factor = bolling_band_factor_generator(filtered_df)
@@ -68,7 +68,7 @@ normalized_multi_period_momentum = multi_period_momentum(filtered_df)
 # %%
 # 6. 计算行情收益率
 ret = filtered_df['close'].pct_change().shift(-1).fillna(0)
-print(ret.describe())
+#print(ret.describe())
 
 # %%
 # 定义单因子测试函数
@@ -78,10 +78,13 @@ def test_single_factor(factor_name, factor_data):
 
     # 处理因子
     print(f"处理因子: {factor_name}")
-    processed_factors, final_factor = process_multi_factors_nonlinear(factors, returns=ret)
-    
+    #processed_factors, final_factor = process_multi_factors_nonlinear(factors, returns=ret)
+    final_factor = factor_data
     # 计算净值
     net_values = cal_net_values(final_factor, ret)
+    plt.plot(net_values.values)
+    plt.title(f"Net Value of {factor_name}")
+    plt.show()
     
     # 计算夏普比率
     cleaned_net_values = net_values[~np.isnan(net_values)]
@@ -90,7 +93,7 @@ def test_single_factor(factor_name, factor_data):
     # 可视化
     plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
     plt.title(f"Histogram of {factor_name}")
-    plt.show()
+    #plt.show()
     
     return sharp, final_factor.describe()
 
