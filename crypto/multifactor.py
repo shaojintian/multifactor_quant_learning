@@ -52,9 +52,20 @@ filtered_df = z
 from factor_lib.bolling_band_factor import bolling_band_factor_generator
 from factor_lib.volatility_factor import calc_vol_mean_reversion_factor
 from factor_lib.momentum_vol_factor import adaptive_momentum_factor
+from factor_lib.liquidity_factor import *
 bolling_band_factor = bolling_band_factor_generator(filtered_df)
 volatility_factor = calc_vol_mean_reversion_factor(filtered_df['close'])
 adaptive_momentum_factor = adaptive_momentum_factor(filtered_df)
+normalized_volatility_adjusted_momentum = volatility_adjusted_momentum(filtered_df)
+normalized_volume_weighted_momentum = volume_weighted_momentum(filtered_df)
+normalized_buy_pressure = buy_pressure(filtered_df)
+normalized_price_efficiency = price_efficiency(filtered_df)
+normalized_price_volume_divergence = price_volume_divergence(filtered_df)
+normalized_volatility_regime = volatility_regime(filtered_df)
+normalized_trade_activity = trade_activity(filtered_df)
+normalized_price_strength = price_strength(filtered_df)
+normalized_volume_imbalance = volume_imbalance(filtered_df)
+normalized_multi_period_momentum = multi_period_momentum(filtered_df)
 
 
 
@@ -69,8 +80,18 @@ print(ret.describe())
 #多个因子的风险正交
 factors = pd.DataFrame({
     'bolling_band_factor': bolling_band_factor,
-    'volatility_factor': volatility_factor,
-    'adaptive_momentum_factor': adaptive_momentum_factor
+    # # 'volatility_factor': volatility_factor,
+    # # 'adaptive_momentum_factor': adaptive_momentum_factor,
+    # # 'normalized_volatility_adjusted_momentum': normalized_volatility_adjusted_momentum,
+    # # 'normalized_volume_weighted_momentum': normalized_volume_weighted_momentum,
+    # 'normalized_buy_pressure': normalized_buy_pressure,
+    # # 'normalized_price_efficiency': normalized_price_efficiency,
+    # # 'normalized_price_volume_divergence': normalized_price_volume_divergence,
+    # 'normalized_volatility_regime': normalized_volatility_regime,
+    # # 'normalized_trade_activity': normalized_trade_activity,
+    # # 'normalized_price_strength': normalized_price_strength,
+    # 'normalized_volume_imbalance': normalized_volume_imbalance,
+    # # 'normalized_multi_period_momentum': normalized_multi_period_momentum
 })
 
 

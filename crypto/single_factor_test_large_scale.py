@@ -101,8 +101,8 @@ def test_single_factor(factor_name, factor_data):
     sharp = cal_sharp_random(cleaned_net_values, period_minutes=_period_minutes, trading_hours=_trading_hours)
     
     # 可视化
-    plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
-    plt.title(f"Histogram of {factor_name}")
+    #plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
+    #plt.title(f"Histogram of {factor_name}")
     #plt.show()
     
     return sharp, final_factor.describe()
@@ -111,18 +111,18 @@ def test_single_factor(factor_name, factor_data):
 # 对每个因子进行测试
 factors = {
     'bolling_band_factor': bolling_band_factor,
-    'volatility_factor': volatility_factor,
-    'adaptive_momentum_factor': adaptive_momentum_factor,
-    'normalized_volatility_adjusted_momentum': normalized_volatility_adjusted_momentum,
-    'normalized_volume_weighted_momentum': normalized_volume_weighted_momentum,
+    # 'volatility_factor': volatility_factor,
+    # 'adaptive_momentum_factor': adaptive_momentum_factor,
+    # 'normalized_volatility_adjusted_momentum': normalized_volatility_adjusted_momentum,
+    # 'normalized_volume_weighted_momentum': normalized_volume_weighted_momentum,
     'normalized_buy_pressure': normalized_buy_pressure,
-    'normalized_price_efficiency': normalized_price_efficiency,
-    'normalized_price_volume_divergence': normalized_price_volume_divergence,
+    # 'normalized_price_efficiency': normalized_price_efficiency,
+    # 'normalized_price_volume_divergence': normalized_price_volume_divergence,
     'normalized_volatility_regime': normalized_volatility_regime,
-    'normalized_trade_activity': normalized_trade_activity,
-    'normalized_price_strength': normalized_price_strength,
+    # 'normalized_trade_activity': normalized_trade_activity,
+    # 'normalized_price_strength': normalized_price_strength,
     'normalized_volume_imbalance': normalized_volume_imbalance,
-    'normalized_multi_period_momentum': normalized_multi_period_momentum
+    # 'normalized_multi_period_momentum': normalized_multi_period_momentum
 }
 
 # 打开文件以写入结果
