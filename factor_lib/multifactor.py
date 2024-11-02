@@ -37,7 +37,7 @@ pd.plotting.register_matplotlib_converters()
 
 # %%
 #1. 读取行情数据
-z = pd.read_csv('data/510050.SH_15.csv',index_col=0)
+z = pd.read_csv('data/crypto/BTC_USDT_day.csv',index_col=0)
 import datetime
 #date_threshold = datetime.datetime(2020, 2, 1)
 #filtered_df = z[z.index > '2020-01-01']
@@ -65,7 +65,7 @@ factors = [
 # %%
 # 6. 计算行情收益率
 ret = filtered_df['close'].pct_change().shift(-1).fillna(0)
-ret.describe()
+print(ret.describe())
 
 # %%
 #### 3.进行风险正交
@@ -85,7 +85,7 @@ factors = pd.DataFrame({
 
 # %%
 # 4.处理因子
-#print("处理前的因子统计："+f"{final_factor.shape}")
+print("4.处理前的因子统计："+f"{factors.describe()}")
 processed_factors, final_factor = process_multi_factors_nonlinear(factors,returns=ret)
 #print("处理后的因子统计："+f"{final_factor.shape} returns shape:{ret.shape}")
 print(final_factor.describe())

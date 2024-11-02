@@ -9,4 +9,5 @@ def bolling_band_factor_generator(z:pd.DataFrame) ->pd.Series:
     bolling_band_factor = (z['close'] - lower) / (upper - lower)
     z['bolling_band_factor'] = bolling_band_factor
 
-    return normalize_factor(z['bolling_band_factor'])  
+    factor = normalize_factor(z['bolling_band_factor']) 
+    return  factor

@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from model.random_forest import combine_factors_nonlinear
 from util.norm import normalize_factor
+from util.decorator import print_variable_shapes
 
 def risk_orthogonalization(factors: pd.DataFrame) -> pd.DataFrame:
     """
@@ -82,7 +83,8 @@ def process_multi_factors_linear(factors: pd.DataFrame) -> pd.DataFrame:
     
     return processed_factors, final_factor
 
-def process_multi_factors_nonlinear(factors_df:pd.DataFrame, returns:pd.Series ,model_type='rf') -> pd.DataFrame:
+@print_variable_shapes
+def process_multi_factors_nonlinear(factors_df:pd.DataFrame, returns:pd.Series ,model_type='xgboost') -> pd.DataFrame:
     """
     完整的多因子处理流程
     """
