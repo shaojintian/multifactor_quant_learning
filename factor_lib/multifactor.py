@@ -112,15 +112,23 @@ print(final_factor.describe())
 plt.hist(final_factor.dropna(), bins=50, alpha=0.3, label=final_factor.name)
 plt.show()
 
+
+# %% 因子转化为仓位,
+# 
+final_fictor = final_factor.fillna(0)
+
 # %% save final_factor
 final_factor.to_csv('factor_test_data/crypto/final_factor.csv')
 
+
 # %%
+
 net_values = cal_net_values(final_factor,ret)
 plt.plot(net_values.values)
 plt.title(final_factor.name)
 plt.grid(True)
 plt.show()
+
 
 
 # %%
