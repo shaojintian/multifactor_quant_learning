@@ -21,7 +21,7 @@ def preprocess(file_path, frequency, n_days):
     df.dropna(axis=0, how='any', inplace=True)
     df = df.reset_index(drop=True)
 
-    fields = df.columns['open','high','low','close','volume','quote asset volume','number of trades','taker buy base asset volume','taker buy quote asset volume']  # e.g. ['etime', 'open', 'high', 'low', 'close', 'volume', 'ret'][1: ] # 特征
+    fields = df[['open','high','low','close','volume']]  # e.g. ['etime', 'open', 'high', 'low', 'close', 'volume', 'ret'][1: ] # 特征
 
     for col in fields:
         df[col] = df[col].values.astype('float')
@@ -33,7 +33,7 @@ def preprocess(file_path, frequency, n_days):
 
 
 start_time = time.time()
-X_train, y_train = preprocess(file_path='/Users/wanting/Downloads/multifactor_quant_learning/data/crypto/btcusdt_60m.csv', frequency='60', n_days=1)
+X_train, y_train = preprocess(file_path='/Users/wanting/Downloads/multifactor_quant_learning/data/commodities_data/csi500_futures_1d.csv', frequency='60', n_days=1)
 # 不应该是全局数据，应该是70%，或者60%的数据，留一个验证集，测试集；
 
 #"""Activate the Customized Functions"""
@@ -78,7 +78,7 @@ ST_gplearn = SymbolicTransformer(population_size=500, # 一次生成因子的数
                                  p_hoist_mutation=0.01,
                                  p_point_mutation=0.01,
                                  p_point_replace=0.4,
-                                 feature_names=['open','high','low','close','volume','quote asset volume','number of trades','taker buy base asset volume','taker buy quote asset volume'], # 注意这里必须有feature_names 把重要算子“聚合化”，
+                                 feature_names=['open','high','low','close','volume'], # 注意这里必须有feature_names 把重要算子“聚合化”，
                                  n_jobs=-1,
                                  random_state=1)
 

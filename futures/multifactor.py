@@ -149,9 +149,12 @@ ret.to_csv(os.path.join(project_root,'factor_test_data/crypto/ret.csv'))
 
 net_values = cal_net_values(final_factor,ret)
 net_values.to_csv(os.path.join(project_root,f'factor_test_data/futures/{z.name}_net_values.csv'))
+net_values_before_rebte = cal_net_values_before_rebate(final_factor,ret)
 
 plt.figure(figsize=(12, 6))
-plt.plot(net_values.index, net_values.values)
+plt.plot(pd.to_datetime(net_values.index),net_values.values)
+plt.plot(pd.to_datetime(net_values.index),net_values_before_rebte.values)
+plt.legend(['net_values','net_values_before_rebte'])
 plt.xlabel('Date')
 plt.title(f"{z.name} "+ final_factor.name)
 plt.grid(True)
@@ -168,12 +171,12 @@ plt.show()
 
 
 # %%
-# calculate 净值 before fee
-net_values_before_rebte = cal_net_values_before_rebate(final_factor,ret)
-plt.plot(net_values_before_rebte.values)
-plt.title(f"{z.name} "+final_factor.name+'before fee')
-plt.grid(True)
-plt.show()
+# # calculate 净值 before fee
+# net_values_before_rebte = cal_net_values_before_rebate(final_factor,ret)
+# plt.plot(net_values_before_rebte.values)
+# plt.title(f"{z.name} "+final_factor.name+'before fee')
+# plt.grid(True)
+# plt.show()
 
 # %%
 # 可视化组合因子的预测效果
