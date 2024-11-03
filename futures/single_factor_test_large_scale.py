@@ -122,33 +122,35 @@ def test_single_factor(factor_name, factor_data):
 # %%
 # 对每个因子进行测试
 factors = {
-    'bolling_band_factor': bolling_band_factor,
-    'volatility_factor': volatility_factor,
-    'adaptive_momentum_factor': adaptive_momentum_factor,
-    'normalized_volatility_adjusted_momentum': normalized_volatility_adjusted_momentum,
-    'normalized_volume_weighted_momentum': normalized_volume_weighted_momentum,
-    'normalized_buy_pressure': normalized_buy_pressure,
-    'normalized_price_efficiency': normalized_price_efficiency,
-    'normalized_price_volume_divergence': normalized_price_volume_divergence,
-    'normalized_volatility_regime': normalized_volatility_regime,
-    'normalized_trade_activity': normalized_trade_activity,
-    'normalized_price_strength': normalized_price_strength,
-    'normalized_volume_imbalance': normalized_volume_imbalance,
-    'normalized_multi_period_momentum': normalized_multi_period_momentum,
-    # 'alpha047': normalize_factor(alphas['alpha047']),
+    # 'bolling_band_factor': bolling_band_factor,
+    # 'volatility_factor': volatility_factor,
+    # 'adaptive_momentum_factor': adaptive_momentum_factor,
+    # 'normalized_volatility_adjusted_momentum': normalized_volatility_adjusted_momentum,
+    # 'normalized_volume_weighted_momentum': normalized_volume_weighted_momentum,
+    # 'normalized_buy_pressure': normalized_buy_pressure,
+    # 'normalized_price_efficiency': normalized_price_efficiency,
+    # 'normalized_price_volume_divergence': normalized_price_volume_divergence,
+    # 'normalized_volatility_regime': normalized_volatility_regime,
+    # 'normalized_trade_activity': normalized_trade_activity,
+    # 'normalized_price_strength': normalized_price_strength,
+    # 'normalized_volume_imbalance': normalized_volume_imbalance,
+    # 'normalized_multi_period_momentum': normalized_multi_period_momentum,
+    'alpha005': normalize_factor(alphas['alpha005']),
+    'alpha005_clip03': normalize_factor(alphas['alpha005']).clip(0,3),
+    'alpha005_clip13': normalize_factor(alphas['alpha005']).clip(1,3),
     # 'alpha037': normalize_factor(alphas['alpha037']),
     # 'alpha038': normalize_factor(alphas['alpha038']),
     # 'alpha049': normalize_factor(alphas['alpha049']),
     # 'alpha041': normalize_factor(alphas['alpha041']),
     # 'alpha025': normalize_factor(alphas['alpha025']), 
 }
-alpha_dict = {}
-for i in range(1, 101):
-    try:
-        alpha_dict[f'alpha{i:03}'] = normalize_factor(alphas[f'alpha{i:03}']) 
-    except:
-        alpha_dict[f'alpha{i:03}'] = pd.Series() # Accessing the alphas dictionary
-factors.update(alpha_dict)
+# alpha_dict = {}
+# for i in range(1, 101):
+#     try:
+#         alpha_dict[f'alpha{i:03}'] = normalize_factor(alphas[f'alpha{i:03}']) 
+#     except:
+#         alpha_dict[f'alpha{i:03}'] = pd.Series() # Accessing the alphas dictionary
+# factors.update(alpha_dict)
 
 
 # %%
@@ -164,7 +166,8 @@ for name, data in factors.items():
 results_df = pd.DataFrame(results)
 
 # 保存为 CSV 文件
-results_df.to_csv(f'reports/{z.name}_factor_results.csv', index=False, encoding='utf-8-sig')  # 使用 utf-8-sig 编码以支持中文字符
+from datetime import datetime
+results_df.to_csv(f'reports/{z.name}_{datetime.now()}_factor_results.csv', index=False, encoding='utf-8-sig')  # 使用 utf-8-sig 编码以支持中文字符
 print("report saved=====================\n")
 
 # %% save final_factor

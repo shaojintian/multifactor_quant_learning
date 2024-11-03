@@ -26,11 +26,12 @@ sys.path.append(project_root)
 import numpy as np
 import pandas as pd
 import talib as ta
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from util.norm import normalize_factor
 from util.sharpe_calculatio import cal_sharp
 from calculate_net_vaules import cal_net_values, cal_net_values_before_rebate
-from verify_risk_orthogonalization import process_multi_factors_nonlinear
+from verify_risk_orthogonalization import process_multi_factors_nonlinear,process_multi_factors_linear
 pd.plotting.register_matplotlib_converters()
 
 
@@ -43,7 +44,8 @@ _trading_hours = 4
 name = "csi500_futures_1d.csv"
 z = pd.read_csv(os.path.join(project_root,f'data/commodities_data/{name}'), index_col=0)
 z.name = name
-import datetime
+from datetime import datetime
+
 #date_threshold = datetime.datetime(2020, 2, 1)
 #filtered_df = z[z.index > '2020-01-01']
 filtered_df = z
@@ -87,7 +89,7 @@ factors = pd.DataFrame({
     # 'normalized_volatility_adjusted_momentum': normalized_volatility_adjusted_momentum,
     #'normalized_volume_weighted_momentum': normalized_volume_weighted_momentum,
     # 'normalized_buy_pressure': normalized_buy_pressure,
-    'normalized_price_efficiency': normalized_price_efficiency,
+    #'normalized_price_efficiency': normalized_price_efficiency,
     # 'normalized_price_volume_divergence': normalized_price_volume_divergence,
     #'normalized_volatility_regime': normalized_volatility_regime,
     # 'normalized_trade_activity': normalized_trade_activity,
@@ -110,7 +112,9 @@ factors = pd.DataFrame({
 # %%
 # 4.处理因子
 print("4.处理前的因子统计："+f"{factors.describe()}")
-processed_factors, final_factor = process_multi_factors_nonlinear(factors, returns=ret)
+#processed_factors, final_factor = process_multi_factors_nonlinear(factors, returns=ret)
+
+processed_factors, final_factor = process_multi_factors_linear(factors)
 print(f"\n=====处理后的最终因子统计： {final_factor.shape}")
 print(final_factor.describe())
 
@@ -145,9 +149,20 @@ ret.to_csv(os.path.join(project_root,'factor_test_data/crypto/ret.csv'))
 
 net_values = cal_net_values(final_factor,ret)
 net_values.to_csv(os.path.join(project_root,f'factor_test_data/futures/{z.name}_net_values.csv'))
-plt.plot(net_values.values)
+
+plt.figure(figsize=(12, 6))
+plt.plot(net_values.index, net_values.values)
+plt.xlabel('Date')
 plt.title(f"{z.name} "+ final_factor.name)
 plt.grid(True)
+#标记 x 大于 2024-01-01 的区域为绿色
+# 将横轴转换为时间格式
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+plt.gcf().autofmt_xdate()  # 自动旋转日期标记以避免重叠
+start_date = mdates.date2num(pd.Timestamp('2024-01-01'))
+end_date = mdates.date2num(pd.Timestamp(net_values.index[-1]))
+# 使用转换后的数值绘制垂直跨度
+plt.axvspan(start_date, end_date, color='green', alpha=0.3)
 plt.show()
 
 

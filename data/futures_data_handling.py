@@ -3,7 +3,7 @@ import pandas as pd
 from io import StringIO
 
 # 下载中证500股指期货1小时数据
-csi500_futures_data = ak.futures_main_sina(symbol="IC0", start_date="20160101", end_date="20240101")
+csi500_futures_data = ak.futures_main_sina(symbol="IC0", start_date="20160101", end_date="20241101")
 
 # 查看数据
 print(csi500_futures_data.head())
