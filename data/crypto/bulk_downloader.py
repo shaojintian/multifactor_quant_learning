@@ -12,6 +12,8 @@ from zipfile import BadZipfile
 import requests
 from rich import print
 from rich.progress import track
+import re
+from datetime import datetime
 
 # import my libraries
 from binance_bulk_downloader.exceptions import (
@@ -114,7 +116,7 @@ class BinanceBulkDownloader:
         data_frequency="1m",
         asset="um",
         timeperiod_per_file="daily",
-        start_date="2024-11-01"
+        start_date="2024-11"
     ) -> None:
         """
         :param destination_dir: Destination directory for downloaded files
@@ -198,11 +200,12 @@ class BinanceBulkDownloader:
         ):
             key = content.find("{http://s3.amazonaws.com/doc/2006-03-01/}Key").text
             if key.endswith(".zip"):
-                # 如果指定了起始日期，过滤掉起始日期之前的文件
-                if self.start_date and self._is_after_start_date(key):
-                    files.append(key)
-                elif not self.start_date:
-                    files.append(key)
+                # # 如果指定了起始日期，过滤掉起始日期之前的文件
+                # if self.start_date and self._is_after_start_date(key):
+                #     files.append(key)
+                # elif not self.start_date:
+                #     files.append(key)
+                files.append(key)
                 self.marker = key
 
         is_truncated_element = tree.find(
@@ -322,17 +325,27 @@ class BinanceBulkDownloader:
         print(f"[bold blue]Downloading {self._data_type}[/bold blue]")
 
         while self.is_truncated:
+            # 获取文件列表
             file_list_generator = self._get_file_list_from_s3_bucket(
                 self._build_prefix(), self.marker, self.is_truncated
             )
+
+            # 过滤文件，确保只下载日期大于等于 start_date 的文件
+            filtered_files = [
+                prefix for prefix in file_list_generator if self._is_after_start_date(prefix)
+            ]
+
+            # 进一步过滤，确保符合数据频率要求
             if self._data_type in self._DATA_FREQUENCY_REQUIRED_BY_DATA_TYPE:
-                file_list_generator = [
+                filtered_files = [
                     prefix
-                    for prefix in file_list_generator
+                    for prefix in filtered_files
                     if prefix.count(self._data_frequency) == 2
                 ]
+
+            # 下载过滤后的文件
             for prefix_chunk in track(
-                self.make_chunks(file_list_generator, self._CHUNK_SIZE),
+                self.make_chunks(filtered_files, self._CHUNK_SIZE),
                 description="Downloading",
             ):
                 with ThreadPoolExecutor() as executor:
@@ -346,13 +359,19 @@ class BinanceBulkDownloader:
         :return: 如果文件日期大于等于 start_date 返回 True，否则返回 False
         """
         try:
-            # 假设文件名路径中包含日期部分
-            date_str = key.split("/")[4]  # 从路径中提取日期字符串（假设路径结构是固定的）
-            file_date = datetime.strptime(date_str, "%Y-%m-%d")
-            start_date = datetime.strptime(self.start_date, "%Y-%m-%d")
-            return file_date >= start_date
+            # 使用正则表达式提取文件路径中的日期（格式为 YYYY-MM）
+            match = re.search(r'(\d{4}-\d{2})', key)  # 匹配YYYY-MM格式的日期
+            if match:
+                file_date_str = match.group(1)
+                file_date = datetime.strptime(file_date_str, "%Y-%m")
+                start_date = datetime.strptime(self.start_date, "%Y-%m")
+                return file_date >= start_date
+            else:
+                print(f"[red]No date found in file path: {key}[/red]")
+                return False
         except Exception as e:
-            print(f"[red]Error parsing date from file: {key}[/red]")
+            print(f"[red]Error parsing date from file: {key} - {e}[/red]")
             return False
+
 
 

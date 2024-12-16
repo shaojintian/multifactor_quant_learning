@@ -44,3 +44,4 @@ hft_c++_system/config/
 .venv
 
 data/futures/*
+data/crypto/data/futures/*
