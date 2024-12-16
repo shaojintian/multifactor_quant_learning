@@ -39,8 +39,12 @@ reports/
 
 local/
 
+<<<<<<< HEAD
 hft_c++_system/config/
 
 .venv
 
 data/futures/*
+=======
+hft_c++_system/config/
+>>>>>>> parent of fa76bd1 (update rust infra)

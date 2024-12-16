@@ -351,11 +351,8 @@ Poco_DIR:PATH=/usr/local/lib/cmake/Poco
 //Name of the computer/site where compile is being run
 SITE:STRING=bogon
 
-//Path to a file.
-UTF8PROC_INCLUDE_DIR:PATH=/usr/local/include
-
-//Path to a library.
-UTF8PROC_LIBRARY:FILEPATH=/usr/local/lib/libutf8proc.dylib
+//The directory containing a CMake configuration file for Utf8Proc.
+Utf8Proc_DIR:PATH=Utf8Proc_DIR-NOTFOUND
 
 //Path to a file.
 ZLIB_INCLUDE_DIR:PATH=/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include
@@ -508,7 +505,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=2
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
@@ -579,8 +576,6 @@ FIND_PACKAGE_MESSAGE_DETAILS_EXPAT:INTERNAL=[/Library/Developer/CommandLineTools
 FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL:INTERNAL=[/usr/local/Cellar/openssl@3/3.4.0/lib/libcrypto.dylib][/usr/local/Cellar/openssl@3/3.4.0/include][c ][v3.4.0()]
 //Details about finding PCRE2
 FIND_PACKAGE_MESSAGE_DETAILS_PCRE2:INTERNAL=[/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/lib/libpcre2-8.tbd][/usr/local/include][v()]
-//Details about finding Utf8Proc
-FIND_PACKAGE_MESSAGE_DETAILS_Utf8Proc:INTERNAL=[/usr/local/lib/libutf8proc.dylib][/usr/local/include][v()]
 //Details about finding ZLIB
 FIND_PACKAGE_MESSAGE_DETAILS_ZLIB:INTERNAL=[/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/lib/libz.tbd][/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include][c ][v1.2.12()]
 //ADVANCED property for variable: GITCOMMAND
@@ -667,10 +662,6 @@ PKG_CONFIG_ARGN-ADVANCED:INTERNAL=1
 PKG_CONFIG_EXECUTABLE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: SITE
 SITE-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: UTF8PROC_INCLUDE_DIR
-UTF8PROC_INCLUDE_DIR-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: UTF8PROC_LIBRARY
-UTF8PROC_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: ZLIB_INCLUDE_DIR
 ZLIB_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: ZLIB_LIBRARY_DEBUG
