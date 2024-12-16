@@ -1,12 +1,12 @@
 # import binance_bulk_downloader
-from data.crypto.bulk_downloader import BinanceBulkDownloader
+from bulk_downloader import BinanceBulkDownloader
 
 # generate instance
 downloader = BinanceBulkDownloader()
 
 
 # download klines (frequency: "5m", asset="um")
-downloader = BinanceBulkDownloader(data_frequency="3m", asset="um", timeperiod_per_file="monthly")
+downloader = BinanceBulkDownloader(data_frequency="3m", asset="um", timeperiod_per_file="monthly",start_date="2014-11-01")
 downloader.run_download()
 
 '''

@@ -114,6 +114,7 @@ class BinanceBulkDownloader:
         data_frequency="1m",
         asset="um",
         timeperiod_per_file="daily",
+        start_date="2024-11-01"
     ) -> None:
         """
         :param destination_dir: Destination directory for downloaded files
@@ -130,6 +131,7 @@ class BinanceBulkDownloader:
         self.marker = None
         self.is_truncated = True
         self.downloaded_list = []
+        self.start_date = start_date  # 新增的参数，用于指定起始日期
 
     def _check_params(self) -> None:
         """
@@ -196,7 +198,11 @@ class BinanceBulkDownloader:
         ):
             key = content.find("{http://s3.amazonaws.com/doc/2006-03-01/}Key").text
             if key.endswith(".zip"):
-                files.append(key)
+                # 如果指定了起始日期，过滤掉起始日期之前的文件
+                if self.start_date and self._is_after_start_date(key):
+                    files.append(key)
+                elif not self.start_date:
+                    files.append(key)
                 self.marker = key
 
         is_truncated_element = tree.find(
@@ -332,3 +338,21 @@ class BinanceBulkDownloader:
                 with ThreadPoolExecutor() as executor:
                     executor.map(self._download, prefix_chunk)
                 self.downloaded_list.extend(prefix_chunk)
+
+    def _is_after_start_date(self, key: str) -> bool:
+        """
+        判断文件的日期是否在指定的起始日期之后
+        :param key: 文件的 S3 路径
+        :return: 如果文件日期大于等于 start_date 返回 True，否则返回 False
+        """
+        try:
+            # 假设文件名路径中包含日期部分
+            date_str = key.split("/")[4]  # 从路径中提取日期字符串（假设路径结构是固定的）
+            file_date = datetime.strptime(date_str, "%Y-%m-%d")
+            start_date = datetime.strptime(self.start_date, "%Y-%m-%d")
+            return file_date >= start_date
+        except Exception as e:
+            print(f"[red]Error parsing date from file: {key}[/red]")
+            return False
+
+
