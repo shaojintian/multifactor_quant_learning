@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 # 策略基类
 class BaseStrategy(ABC):
-    def __init__(self,balance=10000,data:pd.DataFrame=None):
+    def __init__(self,balance=10000,data):
         self.balance = balance
         self.data = data
     @abstractmethod
@@ -14,6 +14,10 @@ class BaseStrategy(ABC):
 
     @abstractmethod
     def simulate_balance(self, prices, initial_balance=100000):
+        pass
+
+    @abstractmethod
+    def run(self, *args):
         pass
 
     @abstractmethod

@@ -1,13 +1,23 @@
-from backtest import BaseStrategy
 from matplotlib import pyplot as plt
-
+from .base_strategy import BaseStrategy
 #✗ 山寨币轮动：当前1-3min成交额是之前序列时间窗口例如100个bar均值的50-100倍以上
 #本质是跟随知情交易者或操纵市场
 
 class ShanzhaiRotationStrategy(BaseStrategy):
-    def __init__(self, volume_window=100, volume_multiplier=100):
+    def __init__(self, volume_window=100, volume_multiplier=(50, 100), initial_balance=10000):
+        """
+        初始化轮动策略
+        :param volume_window: 成交量均值计算窗口
+        :param volume_multiplier: 成交量倍数阈值 (min_multiplier, max_multiplier)
+        :param initial_balance: 初始账户余额
+        """
         self.volume_window = volume_window
         self.volume_multiplier = volume_multiplier
+        self.balance = initial_balance
+        self.position = 0  # 当前仓位
+        self.asset_price = 0  # 买入时的价格
+        self.symbol = None  # 当前持仓的币种
+        
     
     def compute_metrics(self, prices, volumes, risk_free_rate=0.0):
         """
@@ -44,4 +54,62 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         if current_volume > moving_average_volume * self.volume_multiplier[0]:
             return True  # 检测到轮动信号
         return False
+
+    def detect_rotation(self, volumes):
+        """
+        检测是否出现山寨币轮动的交易信号
+        当前成交量是过去 volume_window 个 bar 均值的 50-100 倍以上
+        """
+        if len(volumes) < self.volume_window + 1:  # 数据不足，返回 False
+            return False
+        
+        moving_average_volume = volumes[-self.volume_window-1:-1].mean()
+        current_volume = volumes.iloc[-1]
+        
+        if current_volume > moving_average_volume * self.volume_multiplier[0]:
+            return True  # 检测到轮动信号
+        return False
+
+    def buy(self, symbol, price):
+        """
+        模拟买入操作
+        """
+        amount_to_buy = self.balance / price
+        self.position = amount_to_buy
+        self.asset_price = price
+        self.symbol = symbol
+        self.balance = 0  # 全仓买入
+        print(f"Buy: {symbol}, Price: {price:.2f}, Amount: {amount_to_buy:.4f}")
+
+    def sell(self, price):
+        """
+        模拟卖出操作
+        """
+        self.balance = self.position * price
+        print(f"Sell: {self.symbol}, Price: {price:.2f}, Total: {self.balance:.2f}")
+        self.position = 0
+        self.asset_price = 0
+        self.symbol = None
+
+    def run(self, data):
+        """
+        遍历所有 symbol 的数据，执行轮动检测并交易
+        """
+        for symbol, df in data.items():
+            close_prices = df['close']
+            volumes = df['volume']
+            
+            # 检测轮动信号
+            if self.detect_rotation(volumes):
+                # 如果已有持仓且当前 symbol 不同，先卖出
+                if self.position > 0 and self.symbol != symbol:
+                    self.sell(close_prices.iloc[-1])
+                
+                # 如果没有持仓，执行买入
+                if self.position == 0:
+                    self.buy(symbol, close_prices.iloc[-1])
+        
+        # 如果最后仍有持仓，假设在最后时刻平仓
+        if self.position > 0:
+            self.sell(close_prices.iloc[-1])
 
