@@ -303,6 +303,9 @@ GAMMA_RAY_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 GAMMA_RAY_SOURCE_DIR:STATIC=/Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system
 
+//Path to a program.
+GITCOMMAND:FILEPATH=/usr/local/bin/git
+
 //Command to build the project
 MAKECOMMAND:STRING=/usr/local/Cellar/cmake/3.26.0/bin/cmake --build . --config "${CTEST_CONFIGURATION_TYPE}"
 
@@ -588,6 +591,8 @@ FIND_PACKAGE_MESSAGE_DETAILS_PCRE2:INTERNAL=[/Library/Developer/CommandLineTools
 FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 //Details about finding ZLIB
 FIND_PACKAGE_MESSAGE_DETAILS_ZLIB:INTERNAL=[/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/lib/libz.tbd][/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include][c ][v1.2.12()]
+//ADVANCED property for variable: GITCOMMAND
+GITCOMMAND-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: MAKECOMMAND
 MAKECOMMAND-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: MEMORYCHECK_COMMAND

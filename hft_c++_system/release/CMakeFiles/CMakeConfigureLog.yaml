@@ -496,3 +496,99 @@ events:
         
       exitCode: 0
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/Cellar/cmake/3.26.0/share/cmake/Modules/CheckIPOSupported.cmake:138 (try_compile)"
+      - "/usr/local/Cellar/cmake/3.26.0/share/cmake/Modules/CheckIPOSupported.cmake:266 (_ipo_run_language_check)"
+      - "cmake/LTO.cmake:215 (check_ipo_supported)"
+      - "CMakeLists.txt:32 (find_lto)"
+    directories:
+      source: "/Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-CXX/src"
+      binary: "/Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-CXX/bin"
+    buildResult:
+      variable: "_IPO_LANGUAGE_CHECK_RESULT"
+      cached: true
+      stdout: |
+        Change Dir: /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-CXX/bin
+        
+        Run Build Command(s):/usr/local/bin/ninja -v && [1/4] /Library/Developer/CommandLineTools/usr/bin/c++   -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -MD -MT CMakeFiles/foo.dir/foo.cpp.o -MF CMakeFiles/foo.dir/foo.cpp.o.d -o CMakeFiles/foo.dir/foo.cpp.o -c /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-CXX/src/foo.cpp
+        [2/4] /Library/Developer/CommandLineTools/usr/bin/c++   -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -MD -MT CMakeFiles/boo.dir/main.cpp.o -MF CMakeFiles/boo.dir/main.cpp.o.d -o CMakeFiles/boo.dir/main.cpp.o -c /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-CXX/src/main.cpp
+        [3/4] : && /usr/local/Cellar/cmake/3.26.0/bin/cmake -E rm -f libfoo.a && "/Library/Developer/CommandLineTools/usr/bin/ar" cr libfoo.a  CMakeFiles/foo.dir/foo.cpp.o && "/Library/Developer/CommandLineTools/usr/bin/ranlib" libfoo.a && /usr/local/Cellar/cmake/3.26.0/bin/cmake -E touch libfoo.a && :
+        [4/4] : && /Library/Developer/CommandLineTools/usr/bin/c++ -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/usr/local/opt/openssl@1.1/lib CMakeFiles/boo.dir/main.cpp.o -o boo  libfoo.a && :
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/Cellar/cmake/3.26.0/share/cmake/Modules/CheckIPOSupported.cmake:138 (try_compile)"
+      - "/usr/local/Cellar/cmake/3.26.0/share/cmake/Modules/CheckIPOSupported.cmake:266 (_ipo_run_language_check)"
+      - "cmake/LTO.cmake:215 (check_ipo_supported)"
+      - "CMakeLists.txt:32 (find_lto)"
+    directories:
+      source: "/Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-C/src"
+      binary: "/Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-C/bin"
+    buildResult:
+      variable: "_IPO_LANGUAGE_CHECK_RESULT"
+      cached: true
+      stdout: |
+        Change Dir: /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-C/bin
+        
+        Run Build Command(s):/usr/local/bin/ninja -v && [1/4] /Library/Developer/CommandLineTools/usr/bin/cc   -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -MD -MT CMakeFiles/foo.dir/foo.c.o -MF CMakeFiles/foo.dir/foo.c.o.d -o CMakeFiles/foo.dir/foo.c.o -c /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-C/src/foo.c
+        [2/4] /Library/Developer/CommandLineTools/usr/bin/cc   -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -MD -MT CMakeFiles/boo.dir/main.c.o -MF CMakeFiles/boo.dir/main.c.o.d -o CMakeFiles/boo.dir/main.c.o -c /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-C/src/main.c
+        [3/4] : && /usr/local/Cellar/cmake/3.26.0/bin/cmake -E rm -f libfoo.a && "/Library/Developer/CommandLineTools/usr/bin/ar" cr libfoo.a  CMakeFiles/foo.dir/foo.c.o && "/Library/Developer/CommandLineTools/usr/bin/ranlib" libfoo.a && /usr/local/Cellar/cmake/3.26.0/bin/cmake -E touch libfoo.a && :
+        [4/4] : && /Library/Developer/CommandLineTools/usr/bin/cc -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/usr/local/opt/openssl@1.1/lib CMakeFiles/boo.dir/main.c.o -o boo  libfoo.a && :
+        
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/Cellar/cmake/3.26.0/share/cmake/Modules/CheckIPOSupported.cmake:138 (try_compile)"
+      - "/usr/local/Cellar/cmake/3.26.0/share/cmake/Modules/CheckIPOSupported.cmake:266 (_ipo_run_language_check)"
+      - "cmake/LTO.cmake:215 (check_ipo_supported)"
+      - "CMakeLists.txt:32 (find_lto)"
+    directories:
+      source: "/Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-CXX/src"
+      binary: "/Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-CXX/bin"
+    buildResult:
+      variable: "_IPO_LANGUAGE_CHECK_RESULT"
+      cached: true
+      stdout: |
+        Change Dir: /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-CXX/bin
+        
+        Run Build Command(s):/usr/local/bin/ninja -v && [1/4] /Library/Developer/CommandLineTools/usr/bin/c++   -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -MD -MT CMakeFiles/foo.dir/foo.cpp.o -MF CMakeFiles/foo.dir/foo.cpp.o.d -o CMakeFiles/foo.dir/foo.cpp.o -c /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-CXX/src/foo.cpp
+        [2/4] /Library/Developer/CommandLineTools/usr/bin/c++   -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -MD -MT CMakeFiles/boo.dir/main.cpp.o -MF CMakeFiles/boo.dir/main.cpp.o.d -o CMakeFiles/boo.dir/main.cpp.o -c /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-CXX/src/main.cpp
+        [3/4] : && /usr/local/Cellar/cmake/3.26.0/bin/cmake -E rm -f libfoo.a && "/Library/Developer/CommandLineTools/usr/bin/ar" cr libfoo.a  CMakeFiles/foo.dir/foo.cpp.o && "/Library/Developer/CommandLineTools/usr/bin/ranlib" libfoo.a && /usr/local/Cellar/cmake/3.26.0/bin/cmake -E touch libfoo.a && :
+        [4/4] : && /Library/Developer/CommandLineTools/usr/bin/c++ -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/usr/local/opt/openssl@1.1/lib CMakeFiles/boo.dir/main.cpp.o -o boo  libfoo.a && :
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/Cellar/cmake/3.26.0/share/cmake/Modules/CheckIPOSupported.cmake:138 (try_compile)"
+      - "/usr/local/Cellar/cmake/3.26.0/share/cmake/Modules/CheckIPOSupported.cmake:266 (_ipo_run_language_check)"
+      - "cmake/LTO.cmake:215 (check_ipo_supported)"
+      - "CMakeLists.txt:32 (find_lto)"
+    directories:
+      source: "/Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-C/src"
+      binary: "/Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-C/bin"
+    buildResult:
+      variable: "_IPO_LANGUAGE_CHECK_RESULT"
+      cached: true
+      stdout: |
+        Change Dir: /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-C/bin
+        
+        Run Build Command(s):/usr/local/bin/ninja -v && [1/4] /Library/Developer/CommandLineTools/usr/bin/cc   -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -MD -MT CMakeFiles/foo.dir/foo.c.o -MF CMakeFiles/foo.dir/foo.c.o.d -o CMakeFiles/foo.dir/foo.c.o -c /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-C/src/foo.c
+        [2/4] /Library/Developer/CommandLineTools/usr/bin/cc   -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -MD -MT CMakeFiles/boo.dir/main.c.o -MF CMakeFiles/boo.dir/main.c.o.d -o CMakeFiles/boo.dir/main.c.o -c /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_system/release/CMakeFiles/_CMakeLTOTest-C/src/main.c
+        [3/4] : && /usr/local/Cellar/cmake/3.26.0/bin/cmake -E rm -f libfoo.a && "/Library/Developer/CommandLineTools/usr/bin/ar" cr libfoo.a  CMakeFiles/foo.dir/foo.c.o && "/Library/Developer/CommandLineTools/usr/bin/ranlib" libfoo.a && /usr/local/Cellar/cmake/3.26.0/bin/cmake -E touch libfoo.a && :
+        [4/4] : && /Library/Developer/CommandLineTools/usr/bin/cc -flto=thin -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/usr/local/opt/openssl@1.1/lib CMakeFiles/boo.dir/main.c.o -o boo  libfoo.a && :
+        
+      exitCode: 0
+...
