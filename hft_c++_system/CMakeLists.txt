@@ -4,6 +4,7 @@ project(GAMMA_RAY VERSION 0.0.0.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_FLAGS "-Wall -Werror -Wfatal-errors -Wpedantic -Wextra -Wmissing-include-dirs -pthread")
 add_compile_options(-Wall -Werror -Wfatal-errors -Wpedantic -Wextra -Wmissing-include-dirs -pthread)
+add_compile_options(-Wno-poison-system-directories)
 
 
 # Options
@@ -27,12 +28,19 @@ include(Boost)
 include(POCO)
 include(Websocketpp)
 include(Cpprestsdk)
+#include(Utf8Proc)
 
 # Check for LTO support.
 find_lto(CXX)
 # check for utf8proc
 
-set(CMAKE_PREFIX_PATH /usr/local/opt/utf8proc)
+# set(CMAKE_PREFIX_PATH "/usr/local/opt/utf8proc" ${CMAKE_PREFIX_PATH})
+# # 添加 brew 安装的 utf8proc 头文件路径
+# include_directories("/usr/local/opt/utf8proc/include")
+# # 添加 brew 安装的库文件路径
+# link_directories("/usr/local/opt/utf8proc/lib")
+# # 在需要链接的地方
+# target_link_libraries(main utf8proc)
 find_package(Utf8Proc REQUIRED)
 
 # --------------------------------------------------------------------------------
@@ -72,6 +80,7 @@ target_link_libraries(${LIBRARY_NAME} PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(${LIBRARY_NAME} PUBLIC websocketpp ssl crypto)
 target_link_libraries(${LIBRARY_NAME} PUBLIC Poco::Foundation Poco::Util Poco::Net)
 target_link_libraries(${LIBRARY_NAME} PUBLIC cpprestsdk::cpprest)
+target_link_libraries(${LIBRARY_NAME} PUBLIC Utf8Proc::Utf8Proc)
 
 # Set the compile options
 target_set_warnings(${LIBRARY_NAME} ENABLE ALL AS_ERROR ALL DISABLE Annoying)
@@ -119,7 +128,7 @@ target_precompile_headers(${LIBRARY_NAME} PUBLIC
 # Add an executable for the file app/main.cpp.
 add_executable(main app/main.cpp)   # Name of exec. and location of file.
 target_link_libraries(main PRIVATE ${LIBRARY_NAME})  # Link the executable to library
-target_link_libraries(main Poco::Foundation Utf8Proc::Utf8Proc)
+target_link_libraries(main PRIVATE utf8proc)
 
 target_set_warnings(main ENABLE ALL AS_ERROR ALL DISABLE Annoying) # Set warnings
 target_enable_lto(main optimized)  # enable link-time-optimization if available for non-debug configurations
