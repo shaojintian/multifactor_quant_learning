@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 # 策略基类
 class BaseStrategy(ABC):
-    def __init__(self,balance=10000,data):
+    def __init__(self,data,balance=10000):
         self.balance = balance
         self.data = data
     @abstractmethod

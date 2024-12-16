@@ -1,5 +1,7 @@
 from matplotlib import pyplot as plt
 from .base_strategy import BaseStrategy
+import pandas as pd
+from matplotlib import pyplot as plt
 #✗ 山寨币轮动：当前1-3min成交额是之前序列时间窗口例如100个bar均值的50-100倍以上
 #本质是跟随知情交易者或操纵市场
 
@@ -17,6 +19,7 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         self.position = 0  # 当前仓位
         self.asset_price = 0  # 买入时的价格
         self.symbol = None  # 当前持仓的币种
+        self.balance_traces =pd.Series([]) # 账户余额记录
         
     
     def compute_metrics(self, prices, volumes, risk_free_rate=0.0):
@@ -35,9 +38,9 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         balance = initial_balance * (1 + daily_returns).cumprod()
         return balance
 
-    def plot_balance(self, balance):
+    def plot_balance(self):
         plt.figure(figsize=(10, 6))
-        plt.plot(balance)
+        plt.plot(self.balance_traces)
         plt.title('Shanzhai Rotation Strategy Balance')
         plt.xlabel('Time')
         plt.ylabel('Balance')
@@ -78,7 +81,7 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         self.position = amount_to_buy
         self.asset_price = price
         self.symbol = symbol
-        self.balance = 0  # 全仓买入
+        self.balance -=  amount_to_buy * self.asset_price # 全仓买入
         print(f"Buy: {symbol}, Price: {price:.2f}, Amount: {amount_to_buy:.4f}")
 
     def sell(self, price):
@@ -95,21 +98,35 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         """
         遍历所有 symbol 的数据，执行轮动检测并交易
         """
+        #print("Running Shanzhai Rotation Strategy ...")
         for symbol, df in data.items():
-            close_prices = df['close']
-            volumes = df['volume']
+            for idx in range(self.volume_window, len(df)):
+                current_close= df['close'].iloc[idx]  # 获取当前时间点的数据
+                current_time = df['open_time'].iloc[idx]
+                volumes = df['volume'][:idx+1]  # 获取到当前时间点的所有成交量数据
+                # 检测轮动信号
+                if self.detect_rotation(volumes):
+                    # 如果已有持仓且当前 symbol 不同，先卖出
+                    if self.position > 0 and self.symbol != symbol:
+                        self.sell(current_close)
+                        self.record_balance(current_time)
+                        
+                    # 如果没有持仓，执行买入
+                    if self.position == 0:
+                        self.buy(symbol, current_close)
+                        self.record_balance(current_time)
             
-            # 检测轮动信号
-            if self.detect_rotation(volumes):
-                # 如果已有持仓且当前 symbol 不同，先卖出
-                if self.position > 0 and self.symbol != symbol:
-                    self.sell(close_prices.iloc[-1])
-                
-                # 如果没有持仓，执行买入
-                if self.position == 0:
-                    self.buy(symbol, close_prices.iloc[-1])
+            # 如果最后仍有持仓，假设在最后时刻平仓
+            if self.position > 0:
+                self.sell(current_close)
+                self.record_balance(current_time)
+            
+            #
+            self.plot_balance()
+            print("Finished Shanzhai Rotation Strategy")
         
-        # 如果最后仍有持仓，假设在最后时刻平仓
-        if self.position > 0:
-            self.sell(close_prices.iloc[-1])
+
+    def record_balance(self,current_time):
+        # 记录账户余额
+        self.balance_traces.append(pd.Series({'time': current_time, 'balance': self.balance}))
 
