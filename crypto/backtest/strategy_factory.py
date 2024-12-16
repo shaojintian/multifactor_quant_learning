@@ -20,6 +20,7 @@ class StrategyFactory:
     def run_strategy(self, name, data:pd.DataFrame, initial_balance=100000, risk_free_rate=0.02):
         """运行一个策略"""
         strategy = self.get_strategy(name)
+        prices = data['close']
         sharpe_ratio, sortino_ratio, p_value = strategy.compute_metrics(prices, risk_free_rate)
         balance = strategy.simulate_balance(prices, initial_balance)
         strategy.plot_balance(balance)
@@ -40,7 +41,7 @@ if __name__ == "__main__":
 
     # 创建示例数据（可以替换为真实数据）
     dates = pd.date_range('2020-01-01', '2021-12-31', freq='B')
-    prices = pd.Series(np.random.rand(len(dates)) * 100 + 1000, index=dates)
+    data = pd.Series(np.random.rand(len(dates)) * 100 + 1000, index=dates)
 
     # 执行策略
-    factory.run_strategy("ShanzhaiRotationStrategy", prices)
+    factory.run_strategy("ShanzhaiRotationStrategy", data)
