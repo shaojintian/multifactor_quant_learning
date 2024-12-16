@@ -101,6 +101,33 @@ class ShanzhaiRotationStrategy(BaseStrategy):
             self.symbol = None
         print(f"Sell: {self.symbol}, Price: {price:.2f}, Total Balance: {self.balance:.2f} Time: {pd.to_datetime(current_time, unit='ms')}")
 
+    def handle_symbol(self, symbol, df):
+        """
+        处理单个 symbol 的买卖逻辑
+        """
+        for idx in range(self.volume_window, len(df)):
+            current_close = df['close'].iloc[idx]  # 获取当前时间点的数据
+            current_time = df['open_time'].iloc[idx]
+            current_quote_asset_volume = df['quote_asset_volume'].iloc[idx]
+            volumes = df['volume'][:idx + 1]  # 获取到当前时间点的所有成交量数据
+            
+            # 检测轮动信号
+            if self.detect_rotation(volumes):
+                # 如果已有持仓且当前 symbol 不同，先卖出
+                if self.position > 0 and self.symbol != symbol:
+                    self.sell(current_close, current_time)
+                    self.record_balance(current_time)
+                    
+                # 如果没有持仓，执行买入
+                if self.position == 0:
+                    self.buy(symbol, current_close, current_quote_asset_volume, current_time)
+                    self.record_balance(current_time)
+        
+        # 如果最后仍有持仓，假设在最后时刻平仓
+        if self.position > 0:
+            self.sell(current_close, current_time)
+            self.record_balance(current_time)
+
     def run(self, data):
         """
         遍历所有 symbol 的数据，执行轮动检测并交易
