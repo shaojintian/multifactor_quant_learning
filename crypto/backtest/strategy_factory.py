@@ -47,7 +47,7 @@ class StrategyFactory:
                         df = pd.read_csv(file_path)
                         df.columns=[
                             'open_time', 'open', 'high', 'low', 'close', 'volume',
-                            'close_time', 'quote_volume', 'Number of Trades',
+                            'close_time', 'quote_asset_volume', 'Number of Trades',
                             'Taker Buy Base Asset Volume', 'Taker Buy Quote Asset Volume', 'Ignore'
                         ]
                         data[symbol] = df

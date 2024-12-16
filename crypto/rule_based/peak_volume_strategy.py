@@ -3,6 +3,8 @@ from .base_strategy import BaseStrategy
 import pandas as pd
 from matplotlib import pyplot as plt
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
+import threading
 #✗ 山寨币轮动：当前1-3min成交额是之前序列时间窗口例如100个bar均值的50-100倍以上
 #本质是跟随知情交易者或操纵市场
 
@@ -20,8 +22,10 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         self.position = 0  # 当前仓位
         self.asset_price = 0  # 买入时的价格
         self.symbol = None  # 当前持仓的币种
-        self.balance_traces =pd.Series([self.balance],index=datetime.datetime(2024,11,0,0,0)) # 账户余额记录
+        self.balance_traces =pd.Series([self.balance],index=[pd.to_datetime('2024-11-01')]) # 账户余额记录
         
+        # 线程锁，保护共享变量
+        self.lock = threading.Lock()
     
     def compute_metrics(self, prices, volumes, risk_free_rate=0.0):
         """
@@ -74,63 +78,50 @@ class ShanzhaiRotationStrategy(BaseStrategy):
             return True  # 检测到轮动信号
         return False
 
-    def buy(self, symbol, price):
+    def buy(self, symbol, price,quote_asset_volume,current_time):
         """
         模拟买入操作
         """
-        amount_to_buy = self.balance / price
-        self.position = amount_to_buy
-        self.asset_price = price
-        self.symbol = symbol
-        self.balance -=  amount_to_buy * self.asset_price # 全仓买入
-        print(f"Buy: {symbol}, Price: {price:.2f}, Amount: {amount_to_buy:.4f}")
+        amount_to_buy = min(self.balance, quote_asset_volume) / price
+        with self.lock:  # 使用锁确保线程安全
+            self.position = amount_to_buy
+            self.asset_price = price
+            self.symbol = symbol
+            self.balance -= amount_to_buy * price  # 全仓买入
+        print(f"Buy: {symbol}, Price: {price:.2f}, Amount: {amount_to_buy:.4f} Time: {pd.to_datetime(current_time, unit='ms')}")
 
     def sell(self, price):
         """
         模拟卖出操作
         """
-        self.balance = self.position * price
-        print(f"Sell: {self.symbol}, Price: {price:.2f}, Total: {self.balance:.2f}")
-        self.position = 0
-        self.asset_price = 0
-        self.symbol = None
+        with self.lock:  # 使用锁确保线程安全
+            self.balance = self.position * price
+            self.position = 0
+            self.asset_price = 0
+            self.symbol = None
+        print(f"Sell: {self.symbol}, Price: {price:.2f}, Total Balance: {self.balance:.2f} Time: {pd.to_datetime(current_time, unit='ms')}")
 
     def run(self, data):
         """
         遍历所有 symbol 的数据，执行轮动检测并交易
         """
-        #print("Running Shanzhai Rotation Strategy ...")
-        for symbol, df in data.items():
-            for idx in range(self.volume_window, len(df)):
-                current_close= df['close'].iloc[idx]  # 获取当前时间点的数据
-                current_time = df['open_time'].iloc[idx]
-                volumes = df['volume'][:idx+1]  # 获取到当前时间点的所有成交量数据
-                # 检测轮动信号
-                if self.detect_rotation(volumes):
-                    # 如果已有持仓且当前 symbol 不同，先卖出
-                    if self.position > 0 and self.symbol != symbol:
-                        self.sell(current_close)
-                        self.record_balance(current_time)
-                        
-                    # 如果没有持仓，执行买入
-                    if self.position == 0:
-                        self.buy(symbol, current_close)
-                        self.record_balance(current_time)
-            
-            # 如果最后仍有持仓，假设在最后时刻平仓
-            if self.position > 0:
-                self.sell(current_close)
-                self.record_balance(current_time)
-            
-            #
-            self.plot_balance()
-            print("Finished Shanzhai Rotation Strategy")
+        print("Running Shanzhai Rotation Strategy ...")
         
+        with ThreadPoolExecutor() as executor:  # 使用线程池执行并发任务
+            futures = []
+            for symbol, df in data.items():
+                # 提交每个 symbol 的处理任务
+                futures.append(executor.submit(self.handle_symbol, symbol, df))
+            
+            # 等待所有任务完成
+            for future in futures:
+                future.result()
+
+        self.plot_balance()
+        print("Finished Shanzhai Rotation Strategy")
 
     def record_balance(self,current_time):
-        # 记录账户余额
-        new_balance = pd.Series([self.balance], index=current_time)
-
-        # Assuming self.balance_traces is the existing Series
-        self.balance_traces = pd.concat([self.balance_traces, new_balance])
+        new_balance = pd.Series([self.balance], index=[pd.to_datetime(current_time, unit='ms')])
+        with self.lock:  # 使用锁确保线程安全
+            self.balance_traces = pd.concat([self.balance_traces, new_balance])
 
