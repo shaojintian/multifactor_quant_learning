@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 12 16:40:52 2017
+Created on Thu Oct 12 16:40:52 2024
 
-@author: Marco Dibo
+@author: enzoshao
 
 "High-frequency trading in a limit order book"
 by Marco Avellaneda and Sasha Stoikov"
