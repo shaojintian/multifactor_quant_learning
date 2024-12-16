@@ -2,11 +2,12 @@ from matplotlib import pyplot as plt
 from .base_strategy import BaseStrategy
 import pandas as pd
 from matplotlib import pyplot as plt
+from datetime import datetime
 #✗ 山寨币轮动：当前1-3min成交额是之前序列时间窗口例如100个bar均值的50-100倍以上
 #本质是跟随知情交易者或操纵市场
 
 class ShanzhaiRotationStrategy(BaseStrategy):
-    def __init__(self, volume_window=100, volume_multiplier=(50, 100), initial_balance=10000):
+    def __init__(self, volume_window=100, volume_multiplier=(5, 100), initial_balance=10000):
         """
         初始化轮动策略
         :param volume_window: 成交量均值计算窗口
@@ -19,7 +20,7 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         self.position = 0  # 当前仓位
         self.asset_price = 0  # 买入时的价格
         self.symbol = None  # 当前持仓的币种
-        self.balance_traces =pd.Series([]) # 账户余额记录
+        self.balance_traces =pd.Series([self.balance],index=datetime.datetime(2024,11,0,0,0)) # 账户余额记录
         
     
     def compute_metrics(self, prices, volumes, risk_free_rate=0.0):
@@ -128,5 +129,8 @@ class ShanzhaiRotationStrategy(BaseStrategy):
 
     def record_balance(self,current_time):
         # 记录账户余额
-        self.balance_traces.append(pd.Series({'time': current_time, 'balance': self.balance}))
+        new_balance = pd.Series([self.balance], index=current_time)
+
+        # Assuming self.balance_traces is the existing Series
+        self.balance_traces = pd.concat([self.balance_traces, new_balance])
 
