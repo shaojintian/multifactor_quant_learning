@@ -5,6 +5,9 @@ from abc import ABC, abstractmethod
 
 # 策略基类
 class BaseStrategy(ABC):
+    def __init__(self,balance=10000,data:pd.DataFrame=None):
+        self.balance = balance
+        self.data = data
     @abstractmethod
     def compute_metrics(self, prices, risk_free_rate=0.0):
         pass
@@ -18,14 +21,14 @@ class BaseStrategy(ABC):
         pass
 
     def compute_daily_returns(self, prices):
-        return prices.pct_change().dropna()
+        return prices.pct_change().shift(-1).dropna()
 
-    def calculate_sharpe_ratio(self, daily_returns, risk_free_rate=0.0):
+    def calculate_sharpe_ratio(self, daily_returns:np.array, risk_free_rate=0.0):
         excess_returns = daily_returns - risk_free_rate
         sharpe_ratio = np.mean(excess_returns) / np.std(excess_returns) * np.sqrt(252)
         return sharpe_ratio
 
-    def calculate_sortino_ratio(self, daily_returns, risk_free_rate=0.0):
+    def calculate_sortino_ratio(self, daily_returns:np.array, risk_free_rate=0.0):
         downside_returns = daily_returns[daily_returns < 0]
         expected_return = np.mean(daily_returns) - risk_free_rate
         downside_deviation = np.std(downside_returns)

@@ -17,7 +17,7 @@ class StrategyFactory:
             raise ValueError(f"Strategy {name} not registered!")
         return strategy_class()
 
-    def run_strategy(self, name, prices, initial_balance=100000, risk_free_rate=0.02):
+    def run_strategy(self, name, data:pd.DataFrame, initial_balance=100000, risk_free_rate=0.02):
         """运行一个策略"""
         strategy = self.get_strategy(name)
         sharpe_ratio, sortino_ratio, p_value = strategy.compute_metrics(prices, risk_free_rate)
