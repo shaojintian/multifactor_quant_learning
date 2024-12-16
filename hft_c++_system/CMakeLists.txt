@@ -30,6 +30,10 @@ include(Cpprestsdk)
 
 # Check for LTO support.
 find_lto(CXX)
+# check for utf8proc
+
+set(CMAKE_PREFIX_PATH /usr/local/opt/utf8proc)
+find_package(Utf8Proc REQUIRED)
 
 # --------------------------------------------------------------------------------
 #                         Locate files
@@ -115,6 +119,8 @@ target_precompile_headers(${LIBRARY_NAME} PUBLIC
 # Add an executable for the file app/main.cpp.
 add_executable(main app/main.cpp)   # Name of exec. and location of file.
 target_link_libraries(main PRIVATE ${LIBRARY_NAME})  # Link the executable to library
+target_link_libraries(main Poco::Foundation Utf8Proc::Utf8Proc)
+
 target_set_warnings(main ENABLE ALL AS_ERROR ALL DISABLE Annoying) # Set warnings
 target_enable_lto(main optimized)  # enable link-time-optimization if available for non-debug configurations
 
@@ -129,3 +135,5 @@ set_target_properties(
 
 # Set up tests (see tests/CMakeLists.txt).
 add_subdirectory(tests)
+
+

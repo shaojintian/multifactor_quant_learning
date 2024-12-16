@@ -35,13 +35,7 @@ Boost_RANDOM_LIBRARY_RELEASE:STRING=/usr/local/lib/libboost_random.dylib
 
 Boost_REGEX_LIBRARY_RELEASE:STRING=/usr/local/lib/libboost_regex.dylib
 
-//Boost system library (debug)
-Boost_SYSTEM_LIBRARY_DEBUG:FILEPATH=Boost_SYSTEM_LIBRARY_DEBUG-NOTFOUND
-
 Boost_SYSTEM_LIBRARY_RELEASE:STRING=/usr/local/lib/libboost_system.dylib
-
-//Boost thread library (debug)
-Boost_THREAD_LIBRARY_DEBUG:FILEPATH=Boost_THREAD_LIBRARY_DEBUG-NOTFOUND
 
 Boost_THREAD_LIBRARY_RELEASE:STRING=/usr/local/lib/libboost_thread.dylib
 
@@ -355,7 +349,10 @@ PocoXML_DIR:PATH=/usr/local/lib/cmake/Poco
 Poco_DIR:PATH=/usr/local/lib/cmake/Poco
 
 //Name of the computer/site where compile is being run
-SITE:STRING=localhost
+SITE:STRING=bogon
+
+//The directory containing a CMake configuration file for Utf8Proc.
+Utf8Proc_DIR:PATH=Utf8Proc_DIR-NOTFOUND
 
 //Path to a file.
 ZLIB_INCLUDE_DIR:PATH=/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include
@@ -412,14 +409,6 @@ pkgcfg_lib__OPENSSL_ssl:FILEPATH=/usr/local/Cellar/openssl@3/3.4.0/lib/libssl.dy
 
 //ADVANCED property for variable: Boost_DIR
 Boost_DIR-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: Boost_SYSTEM_LIBRARY_DEBUG
-Boost_SYSTEM_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: Boost_SYSTEM_LIBRARY_RELEASE
-Boost_SYSTEM_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: Boost_THREAD_LIBRARY_DEBUG
-Boost_THREAD_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: Boost_THREAD_LIBRARY_RELEASE
-Boost_THREAD_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_ADDR2LINE
 CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
@@ -516,7 +505,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=2
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
@@ -587,8 +576,6 @@ FIND_PACKAGE_MESSAGE_DETAILS_EXPAT:INTERNAL=[/Library/Developer/CommandLineTools
 FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL:INTERNAL=[/usr/local/Cellar/openssl@3/3.4.0/lib/libcrypto.dylib][/usr/local/Cellar/openssl@3/3.4.0/include][c ][v3.4.0()]
 //Details about finding PCRE2
 FIND_PACKAGE_MESSAGE_DETAILS_PCRE2:INTERNAL=[/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/lib/libpcre2-8.tbd][/usr/local/include][v()]
-//Details about finding Threads
-FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 //Details about finding ZLIB
 FIND_PACKAGE_MESSAGE_DETAILS_ZLIB:INTERNAL=[/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/lib/libz.tbd][/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include][c ][v1.2.12()]
 //ADVANCED property for variable: GITCOMMAND

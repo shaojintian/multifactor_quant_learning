@@ -11,7 +11,7 @@ BuildDirectory: /Users/wanting/Downloads/multifactor_quant_learning/hft_c++_syst
 CostDataFile: 
 
 # Site is something like machine.domain, i.e. pragmatic.crd
-Site: localhost
+Site: bogon
 
 # Build name is osname-revision-compiler, i.e. Linux-2.4.2-2smp-c++
 BuildName: Darwin-c++
