@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 import threading
-from atomic import AtomicInteger, AtomicFloat
+from atomicx import AtomicFloat
 from dataclasses import dataclass
 from typing import Optional
 from .base_strategy import BaseStrategy
@@ -10,8 +10,8 @@ from .base_strategy import BaseStrategy
 @dataclass
 class Position:
     """Thread-safe position data structure"""
-    amount: AtomicFloat
-    price: AtomicFloat
+    amount:  AtomicFloat # 修改这里
+    price: AtomicFloat   # 修改这里
     symbol: Optional[str]
 
 class ShanzhaiRotationStrategy(BaseStrategy):
@@ -24,10 +24,10 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         """
         self.volume_window = volume_window
         self.volume_multiplier = volume_multiplier
-        self._balance = AtomicFloat(initial_balance)
+        self._balance = AtomicFloat.store(initial_balance)  # 修改这里
         self._position = Position(
-            amount=AtomicFloat(0),
-            price=AtomicFloat(0),
+            amount=AtomicFloat.store(0),  # 修改这里
+            price=AtomicFloat.store(0),   # 修改这里
             symbol=None
         )
         self.balance_traces = pd.Series(
@@ -145,3 +145,19 @@ class ShanzhaiRotationStrategy(BaseStrategy):
                 index=[pd.to_datetime(current_time, unit='ms')]
             )
             self.balance_traces = pd.concat([self.balance_traces, new_balance])
+
+    def compute_metrics(self, data):
+        # Implement your metric computation logic
+        pass
+
+    def plot_balance(self, balance_history):
+        # Implement your balance plotting logic
+        pass
+
+    def run(self, data):
+        # Implement your main strategy execution logic
+        pass
+
+    def simulate_balance(self, signals, data):
+        # Implement your balance simulation logic
+        pass
