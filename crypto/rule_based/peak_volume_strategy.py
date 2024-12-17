@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 import threading
-from atomicx import AtomicFloat
+from atomicx import AtomicFloat,AtomicInt
 from dataclasses import dataclass
 from typing import Optional
 from .base_strategy import BaseStrategy
@@ -24,10 +24,10 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         """
         self.volume_window = volume_window
         self.volume_multiplier = volume_multiplier
-        self._balance = AtomicFloat.store(initial_balance)  # 修改这里
+        self._balance = AtomicInt(initial_balance)  # 修改这里
         self._position = Position(
-            amount=AtomicFloat.store(0),  # 修改这里
-            price=AtomicFloat.store(0),   # 修改这里
+            amount=AtomicFloat(0),  # 修改这里
+            price=AtomicFloat(0),   # 修改这里
             symbol=None
         )
         self.balance_traces = pd.Series(
@@ -162,7 +162,24 @@ class ShanzhaiRotationStrategy(BaseStrategy):
 
     def run(self, data):
         # Implement your main strategy execution logic
-        pass
+        print("Running Shanzhai Rotation Strategy ...")
+        with ThreadPoolExecutor() as executor:  # 使用线程池执行并发任务
+            futures = []
+            for symbol, df in data.items():
+                # 提交每个 symbol 的处理任务
+                futures.append(executor.submit(self.handle_symbol, symbol, df))
+            
+            # 等待所有任务完成
+            for future in futures:
+                future.result()
+
+        self.plot_balance()
+        print("Finished Shanzhai Rotation Strategy")
+
+    def record_balance(self,current_time):
+        with self.lock:  # 使用锁确保线程安全
+            new_balance = pd.Series([self.balance], index=[pd.to_datetime(current_time, unit='ms')])
+            self.balance_traces = pd.concat([self.balance_traces, new_balance])
 
     def simulate_balance(self, signals, data):
         # Implement your balance simulation logic
