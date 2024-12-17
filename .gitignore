@@ -45,3 +45,5 @@ hft_c++_system/config/
 
 data/futures/*
 data/crypto/data/futures/*
+
+crypto/backtest/logs/*
