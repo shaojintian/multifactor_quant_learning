@@ -97,7 +97,7 @@ class ShanzhaiRotationStrategy(BaseStrategy):
             self._position.symbol = None
             
             print(f"Sell: {symbol}, Price: {price:.2f}, "
-                  f"Total Balance: {self._balance.value:.2f} "
+                  f"Total Balance: {self._balance:.2f} "
                   f"Time: {pd.to_datetime(current_time, unit='ms')}")
             
             self.record_balance(current_time)
