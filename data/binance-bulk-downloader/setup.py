@@ -6,7 +6,7 @@ setup(
     description="A Python library to efficiently and concurrently download historical data files from Binance. Supports all asset types (spot, futures, options) and all frequencies.",
     install_requires=["requests", "rich", "pytest"],
     author="aoki-h-jp",
-    author_email="aoki.hirotaka.biz@gmail.com",
+    author_email="shaojintian99@gmail.com",
     license="MIT",
-    packages=["binance_bulk_downloader"],
+    packages=["binance_bulk_downloader_free"],
 )
