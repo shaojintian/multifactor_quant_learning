@@ -5,6 +5,7 @@ import threading
 from atomic import AtomicInteger, AtomicFloat
 from dataclasses import dataclass
 from typing import Optional
+from .base_strategy import BaseStrategy
 
 @dataclass
 class Position:
