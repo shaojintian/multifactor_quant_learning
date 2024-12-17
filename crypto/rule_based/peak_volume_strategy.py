@@ -51,17 +51,6 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         plt.ylabel('Balance')
         plt.grid(True)
         plt.show()
-    
-    def detect_rotation(self, volumes):
-        """
-        检测是否出现山寨币轮动的交易信号
-        当前成交量是之前100个bar均值的50-100倍以上
-        """
-        moving_average_volume = volumes[-self.volume_window:-1].mean()  # 过去100个bar的均值
-        current_volume = volumes[-1]  # 当前的成交量
-        if current_volume > moving_average_volume * self.volume_multiplier[0]:
-            return True  # 检测到轮动信号
-        return False
 
     def detect_rotation(self, volumes):
         """
@@ -71,7 +60,7 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         if len(volumes) < self.volume_window + 1:  # 数据不足，返回 False
             return False
         
-        moving_average_volume = volumes[-self.volume_window-1:-1].mean()
+        moving_average_volume = volumes[:-1].tail(self.volume_window).mean()
         current_volume = volumes.iloc[-1]
         
         if current_volume > moving_average_volume * self.volume_multiplier[0]:
@@ -82,15 +71,15 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         """
         模拟买入操作
         """
-        amount_to_buy = min(self.balance, quote_asset_volume) / price
         with self.lock:  # 使用锁确保线程安全
+            amount_to_buy = min(self.balance, quote_asset_volume) / price
             self.position = amount_to_buy
             self.asset_price = price
             self.symbol = symbol
             self.balance -= amount_to_buy * price  # 全仓买入
         print(f"Buy: {symbol}, Price: {price:.2f}, Amount: {amount_to_buy:.4f} Time: {pd.to_datetime(current_time, unit='ms')}")
 
-    def sell(self, price):
+    def sell(self, price,current_time):
         """
         模拟卖出操作
         """
