@@ -152,7 +152,13 @@ class ShanzhaiRotationStrategy(BaseStrategy):
 
     def plot_balance(self, balance_history):
         # Implement your balance plotting logic
-        pass
+        plt.figure(figsize=(10, 6))
+        plt.plot(self.balance_traces)
+        plt.title('Shanzhai Rotation Strategy Balance')
+        plt.xlabel('Time')
+        plt.ylabel('Balance')
+        plt.grid(True)
+        plt.show()
 
     def run(self, data):
         # Implement your main strategy execution logic
@@ -161,3 +167,6 @@ class ShanzhaiRotationStrategy(BaseStrategy):
     def simulate_balance(self, signals, data):
         # Implement your balance simulation logic
         pass
+
+
+    
