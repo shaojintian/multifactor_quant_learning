@@ -77,8 +77,9 @@ class ShanzhaiRotationStrategy(BaseStrategy):
             self.asset_price = price
             self.symbol = symbol
             self.balance -= amount_to_buy * price  # 全仓买入
+            print(f"Buy: {symbol}, Price: {price:.2f}, Amount: {amount_to_buy:.4f} Time: {pd.to_datetime(current_time, unit='ms')}")
         self.record_balance(current_time)  # 记录余额
-        #print(f"Buy: {symbol}, Price: {price:.2f}, Amount: {amount_to_buy:.4f} Time: {pd.to_datetime(current_time, unit='ms')}")
+        
 
     def sell(self, price,current_time):
         """
@@ -96,21 +97,21 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         处理单个 symbol 的买卖逻辑
         """
         for idx in range(self.volume_window, len(df)):
-            with self.lock:  # 确保在修改共享资源时使用锁
-                current_close = df['close'].iloc[idx]  # 获取当前时间点的数据
-                current_time = df['open_time'].iloc[idx]
-                current_quote_asset_volume = df['quote_volume'].iloc[idx]
-                volumes = df['volume'][:idx + 1]  # 获取到当前时间点的所有成交量数据
+            #print(f"Processing {symbol} at index {idx}...")
+            current_close = df['close'].iloc[idx]  # 获取当前时间点的数据
+            current_time = df['open_time'].iloc[idx]
+            current_quote_asset_volume = df['quote_volume'].iloc[idx]
+            volumes = df['volume'][:idx + 1]  # 获取到当前时间点的所有成交量数据
 
-                # 检测轮动信号
-                if self.detect_rotation(volumes):
-                    # 如果已有持仓且当前 symbol 不同，先卖出
-                    if self.position > 0 and self.symbol != symbol:
-                        self.sell(current_close, current_time)
-                    
-                    # 如果没有持仓，执行买入
-                    if self.position == 0:
-                        self.buy(symbol, current_close, current_quote_asset_volume, current_time)
+            # 检测轮动信号
+            if self.detect_rotation(volumes):
+                # 如果已有持仓且当前 symbol 不同，先卖出
+                if self.position > 0 and self.symbol != symbol:
+                    self.sell(current_close, current_time)
+                
+                # 如果没有持仓，执行买入
+                if self.position == 0:
+                    self.buy(symbol, current_close, current_quote_asset_volume, current_time)
         
         # 如果最后仍有持仓，假设在最后时刻平仓
         if self.position > 0:
