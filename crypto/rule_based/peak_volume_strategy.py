@@ -72,24 +72,25 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         模拟买入操作
         """
         with self.lock:  # 使用锁确保线程安全
-            amount_to_buy = min(self.balance*0.99/price, quote_asset_volume*0.99/price) 
+            amount_to_buy = min(self.balance * 0.99 / price, quote_asset_volume * 0.99 / price)
             self.position = amount_to_buy
             self.asset_price = price
             self.symbol = symbol
             self.balance -= amount_to_buy * price  # 全仓买入
-        print(f"Buy: {symbol}, Price: {price:.2f}, Amount: {amount_to_buy:.4f} Time: {pd.to_datetime(current_time, unit='ms')}")
+        self.record_balance(current_time)  # 记录余额
+        #print(f"Buy: {symbol}, Price: {price:.2f}, Amount: {amount_to_buy:.4f} Time: {pd.to_datetime(current_time, unit='ms')}")
 
     def sell(self, price,current_time):
         """
         模拟卖出操作
         """
         with self.lock:  # 使用锁确保线程安全
-            self.balance = self.position * price
+            self.balance = self.position * price if self.position > 0 else self.balance
             self.position = 0
             self.asset_price = 0
             self.symbol = None
-        print(f"Sell: {self.symbol}, Price: {price:.2f}, Total Balance: {self.balance:.2f} Time: {pd.to_datetime(current_time, unit='ms')}")
-
+            print(f"Sell: {self.symbol}, Price: {price:.2f}, Total Balance: {self.balance:.2f} Time: {pd.to_datetime(current_time, unit='ms')}")
+        self.record_balance(current_time)  # 记录余额
     def handle_symbol(self, symbol, df):
         """
         处理单个 symbol 的买卖逻辑
@@ -136,7 +137,7 @@ class ShanzhaiRotationStrategy(BaseStrategy):
         print("Finished Shanzhai Rotation Strategy")
 
     def record_balance(self,current_time):
-        new_balance = pd.Series([self.balance], index=[pd.to_datetime(current_time, unit='ms')])
         with self.lock:  # 使用锁确保线程安全
+            new_balance = pd.Series([self.balance], index=[pd.to_datetime(current_time, unit='ms')])
             self.balance_traces = pd.concat([self.balance_traces, new_balance])
 
