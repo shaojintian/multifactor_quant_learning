@@ -106,15 +106,14 @@ impl AvellanedaStoikov {
         let new_position = self.state.position + position_delta;
         
         // 检查持仓限制
-        if new_position.abs() <= self.config.position_limit {
-            self.update_state(price, new_position);
-            // 模拟挂单交易
-            let order_type = if is_buy { "买入" } else { "卖出" };
-            println!("{} 订单: 价格 {:.2}, 数量 {:.2}, 新持仓: {:.2}", order_type, price, size, new_position);
-            
-        } else {
+        if new_position.abs() > self.config.position_limit {
             println!("订单超出持仓限制，未执行: 价格 {:.2}, 数量 {:.2}, 当前持仓: {:.2}", price, size, self.state.position);
+            return; // 不执行交易
         }
+        self.update_state(price, new_position);
+        // 模拟挂单交易
+        let order_type = if is_buy { "买入" } else { "卖出" };
+        println!("执行交易{} 订单: 价格 {:.2}, 数量 {:.2}, 新持仓: {:.2}", order_type, price, size, new_position);
     }
 
     // 分别计算交易概率
