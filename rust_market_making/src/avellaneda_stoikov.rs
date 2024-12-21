@@ -154,9 +154,11 @@ pub fn main() {
 
     // 初始化策略
     let mut strategy = AvellanedaStoikov::new(config);
-    let mut simulator = MarketSimulator::new(100.0, 0.001);
+    let initial_price = 100.0;
+    let simulator_volatility = 0.001;
+    let mut simulator = MarketSimulator::new(initial_price, simulator_volatility);
 
-    // 模拟交易循环
+    // 模拟交易循环1h
     for _ in 0..3600 {  // 每秒一次报价
         // 更新市场价格
         let new_price = simulator.update_price();
