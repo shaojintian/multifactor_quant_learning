@@ -94,10 +94,9 @@ impl AvellanedaStoikov {
 
     // 更新市场状态
     fn update_state(&mut self, price: f64, new_position: f64) {
-        // 记录交易历史
-        
+        let position_delta = new_position - self.state.position;
 
-
+        self.state.cash -= position_delta * price;
         // 更新当前状态
         self.state.position = new_position;
         self.state.current_price = price; // 更新当前价格
