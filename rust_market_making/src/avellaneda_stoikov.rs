@@ -20,6 +20,7 @@ struct MarketState {
     current_price: f64,
     position: f64,
     start_time: SystemTime,
+    cash: f64,
 }
 
 // 报价
@@ -92,15 +93,16 @@ impl AvellanedaStoikov {
     }
 
     // 更新市场状态
-    fn update_state(&mut self, new_price: f64, new_position: f64) {
-        self.state.current_price = new_price;
+    fn update_state(&mut self, price: f64, new_position: f64) {
+        // 更新当前状态
         self.state.position = new_position;
+        self.state.current_price = price; // 更新当前价格
     }
 
     // 处理成交
     // ... existing code ...
 
-    // 处理成交
+    // 处理成交!!!!!!
     fn handle_trade(&mut self, price: f64, size: f64, is_buy: bool) {
         let position_delta = if is_buy { size } else { -size };
         let new_position = self.state.position + position_delta;
@@ -154,7 +156,7 @@ impl AvellanedaStoikov {
         let random_value_bid: f64 = rng.gen::<f64>(); // 生成一个 [0.0, 1.0) 的随机数
         let random_value_ask: f64 = rng.gen::<f64>(); // 生成一个 [0.0, 1.0) 的随机数
 
-        // 根据随机数和交易概率决定是否执行交易
+        // 根据随机数和交易概率决定是否行交易
         if random_value_bid < prob_bid && random_value_ask > prob_ask{
             // 执行买入
             self.handle_trade(new_price, trade_size, true); // 执行买入
@@ -206,7 +208,7 @@ impl MarketSimulator {
     }
 }
 
-fn plot_results(prices: &[f64], bids: &[f64], asks: &[f64], positions: &[f64], filename: &str) {
+fn plot_results(prices: &[f64], bids: &[f64], asks: &[f64], positions: &[f64], pnl:[f64] filename: &str) {
     let root = BitMapBackend::new(filename, (640, 480)).into_drawing_area();
     root.fill(&WHITE).unwrap();
 
@@ -215,11 +217,13 @@ fn plot_results(prices: &[f64], bids: &[f64], asks: &[f64], positions: &[f64], f
         .margin(5)
         .x_label_area_size(30)
         .y_label_area_size(30)
-        .build_cartesian_2d(0..prices.len() as u32, *prices.iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()..*prices.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap())
+        .build_cartesian_2d(0..prices.len() as u32, 
+            *prices.iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()..*prices.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap())
         .unwrap();
 
     chart.configure_mesh().draw().unwrap();
 
+    // 绘制价格、买���、卖出和持仓
     chart.draw_series(LineSeries::new(prices.iter().enumerate().map(|(x, &y)| (x as u32, y)), &RED)).unwrap()
         .label("Price")
         .legend(|(x, y)| PathElement::new(vec![(x, y)], &RED));
@@ -236,7 +240,17 @@ fn plot_results(prices: &[f64], bids: &[f64], asks: &[f64], positions: &[f64], f
         .label("Position")
         .legend(|(x, y)| PathElement::new(vec![(x, y)], &BLACK));
 
-    chart.configure_series_labels().border_style(&BLACK).draw().unwrap();
+    chart.draw_series(LineSeries::new(positions.iter().enumerate().map(|(x, &y)| (x as u32, y)), &BLACK)).unwrap()
+        .label("PNL")
+        .legend(|(x, y)| PathElement::new(vec![(x, y)], &YELLOW));
+
+}
+
+// 计算 PnL 的辅助函数
+fn calculate_pnl(&self, current_price: f64) -> f64 {
+    let pnl = self.cash + current_price * self.state.position;
+    pnl
+        
 }
 
 pub fn main() {
@@ -263,6 +277,7 @@ pub fn main() {
     let mut bids = Vec::new();
     let mut asks = Vec::new();
     let mut positions = Vec::new();
+    let mut pnl = Vec::new();
 
     // 模拟交易循环1h
     let simulation_time = config.terminal_time as usize;
@@ -282,12 +297,13 @@ pub fn main() {
         bids.push(quotes.bid);
         asks.push(quotes.ask);
         positions.push(strategy.state.position);
+        pnl.push(calculate_pnl(&pnl, new_price));
         
         // 计算风险指标
         let (position_risk, _spread_risk) = strategy.calculate_risk_metrics();
 
         // 执行交易
-        let trade_size = 1.0;
+        let trade_size = new_price * 0.5 / 100.0; //[0.1%,0.5%]
         strategy.execute_trade_if_probable(&quotes, trade_size);
         
         // 打印状态
@@ -303,5 +319,5 @@ pub fn main() {
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
     //
-    plot_results(&prices, &bids, &asks, &positions, "market_making_results.png");
+    plot_results(&prices, &bids, &asks, &positions, &pnl,"market_making_results.png");
 }
