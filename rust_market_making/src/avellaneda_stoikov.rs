@@ -1,5 +1,5 @@
 use std::time::SystemTime;
-
+// 本地模拟as mm
 // 策略配置
 struct Config {
     gamma: f64,         // 风险厌恶系数
