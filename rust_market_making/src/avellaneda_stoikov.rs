@@ -1,4 +1,5 @@
 use std::time::SystemTime;
+use plotters::prelude::*;
 // 本地模拟as mm
 // 策略配置
 struct Config {
@@ -93,6 +94,9 @@ impl AvellanedaStoikov {
     }
 
     // 处理成交
+    // ... existing code ...
+
+// 处理成交
     fn handle_trade(&mut self, price: f64, size: f64, is_buy: bool) {
         let position_delta = if is_buy { size } else { -size };
         let new_position = self.state.position + position_delta;
@@ -100,9 +104,16 @@ impl AvellanedaStoikov {
         // 检查持仓限制
         if new_position.abs() <= self.config.position_limit {
             self.update_state(price, new_position);
+            // 模拟挂单交易
+            let order_type = if is_buy { "买入" } else { "卖出" };
+            println!("{} 订单: 价格 {:.2}, 数量 {:.2}, 新持仓: {:.2}", order_type, price, size, new_position);
+            
+        } else {
+            println!("订单超出持仓限制，未执行: 价格 {:.2}, 数量 {:.2}, 当前持仓: {:.2}", price, size, self.state.position);
         }
     }
 
+// ... existing code ...
     // 风险度量
     fn calculate_risk_metrics(&self) -> (f64, f64) {
         let position_risk = self.state.position.abs() * 
@@ -141,6 +152,39 @@ impl MarketSimulator {
     }
 }
 
+fn plot_results(prices: &[f64], bids: &[f64], asks: &[f64], positions: &[f64], filename: &str) {
+    let root = BitMapBackend::new(filename, (640, 480)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+
+    let mut chart = ChartBuilder::on(&root)
+        .caption("Market Making Strategy Results", ("sans-serif", 50).into_font())
+        .margin(5)
+        .x_label_area_size(30)
+        .y_label_area_size(30)
+        .build_cartesian_2d(0..prices.len() as u32, *prices.iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()..*prices.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap())
+        .unwrap();
+
+    chart.configure_mesh().draw().unwrap();
+
+    chart.draw_series(LineSeries::new(prices.iter().enumerate().map(|(x, &y)| (x as u32, y)), &RED)).unwrap()
+        .label("Price")
+        .legend(|(x, y)| PathElement::new(vec![(x, y)], &RED));
+    
+    chart.draw_series(LineSeries::new(bids.iter().enumerate().map(|(x, &y)| (x as u32, y)), &BLUE)).unwrap()
+        .label("Bid")
+        .legend(|(x, y)| PathElement::new(vec![(x, y)], &BLUE));
+    
+    chart.draw_series(LineSeries::new(asks.iter().enumerate().map(|(x, &y)| (x as u32, y)), &GREEN)).unwrap()
+        .label("Ask")
+        .legend(|(x, y)| PathElement::new(vec![(x, y)], &GREEN));
+    
+    chart.draw_series(LineSeries::new(positions.iter().enumerate().map(|(x, &y)| (x as u32, y)), &BLACK)).unwrap()
+        .label("Position")
+        .legend(|(x, y)| PathElement::new(vec![(x, y)], &BLACK));
+
+    chart.configure_series_labels().border_style(&BLACK).draw().unwrap();
+}
+
 pub fn main() {
     // 策略配置
     let config = Config {
@@ -158,14 +202,27 @@ pub fn main() {
     let simulator_volatility = 0.001;
     let mut simulator = MarketSimulator::new(initial_price, simulator_volatility);
 
+    // 数据收集
+    let mut prices = Vec::new();
+    let mut bids = Vec::new();
+    let mut asks = Vec::new();
+    let mut positions = Vec::new();
+
     // 模拟交易循环1h
-    for _ in 0..3600 {  // 每秒一次报价
+    let simulation_time = 10*60;
+    for _ in 0..simulation_time {  // 每秒一次报价
         // 更新市场价格
         let new_price = simulator.update_price();
         strategy.update_state(new_price, strategy.state.position);
 
         // 获取新的报价
         let quotes = strategy.get_quotes();
+
+        // 收集数据
+        prices.push(new_price);
+        bids.push(quotes.bid);
+        asks.push(quotes.ask);
+        positions.push(strategy.state.position);
         
         // 计算风险指标
         let (position_risk, spread_risk) = strategy.calculate_risk_metrics();
@@ -182,4 +239,6 @@ pub fn main() {
         // 模拟等待1秒
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
+    //
+    plot_results(&prices, &bids, &asks, &positions, "market_making_results.png");
 }
