@@ -1,7 +1,9 @@
 use std::time::SystemTime;
 use plotters::prelude::*;
+use rand::Rng;
 // 本地模拟as mm
 // 策略配置
+#[derive(Clone)]
 struct Config {
     gamma: f64,         // 风险厌恶系数
     k: f64,            // 订单到达率参数
@@ -116,18 +118,18 @@ impl AvellanedaStoikov {
     }
 
     // 分别计算交易概率
-    fn calculate_trade_probability(&self,quotes::&Quote) -> (f64,f64){
+    fn calculate_trade_probability(&self,quotes:&Quote) -> (f64,f64){
         let delta_a = quotes.ask - self.state.current_price;
         let lambda_a = self.config.A * (-self.config.k *delta_a ).exp(); // Rust中使用exp函数计算e的幂
-        let prob_ask = lambda_a * self.config.dt;
+        let prob_ask = lambda_a;
 
         let delta_b = self.state.current_price - quotes.bid;
         let lambda_b = self.config.A * (-self.config.k * delta_b).exp();
-        let prob_bid = lambda_b * self.config.dt;
+        let prob_bid = lambda_b;
         // 使用泊松分布公式 P = A * e^(-λ)
         //λ = k * detla
         //let probability = self.condig.A * (-lambda).exp();
-
+        //println!("quotes.bid{:.2},quotes.ask{:.2},lambda_a{:.3},prob_bid{:.3},prob_ask{:.3}",quotes.bid,quotes.ask,lambda_a,prob_bid,prob_ask);
         (prob_bid,prob_ask)
         
     }
@@ -146,9 +148,9 @@ impl AvellanedaStoikov {
 
     // 执行交易如果符合概率
     fn execute_trade_if_probable(&mut self, quotes: &Quote,trade_size: f64) {
-        let new_price = self.state.current_price
+        let new_price = self.state.current_price;
         // 计算交易概率
-        let prob_bid,prob_ask = self.calculate_trade_probability(quotes);
+        let (prob_bid,prob_ask) = self.calculate_trade_probability(quotes);
         let mut rng = rand::thread_rng();
         let random_value_bid: f64 = rng.gen::<f64>(); // 生成一个 [0.0, 1.0) 的随机数
         let random_value_ask: f64 = rng.gen::<f64>(); // 生成一个 [0.0, 1.0) 的随机数
@@ -164,7 +166,7 @@ impl AvellanedaStoikov {
             println!("Executed Sell: Price: {:.2}, Size: {:.2}", new_price, trade_size);
         } else if random_value_bid > prob_bid && random_value_ask > prob_bid{
             //什么都不做
-            println!("No trade executed: Price: {:.2}, Size: {:.2}", new_price, trade_size);
+            println!("No trade executed: Price: {:.2}, Size: {:.2} ,--prob_bid:{:.2}%----,prob_ask:{:.2}%, random_value_bid:{:.2}%,random_value_ask:{:.2}%", new_price, trade_size,prob_bid*100.0,prob_ask*100.0,random_value_bid*100.0,random_value_ask *100.0);
         }else{
             //同时买卖
             self.handle_trade(new_price, trade_size, true); // 执行买入
@@ -247,12 +249,12 @@ pub fn main() {
         initial_price: 100.0, // 初始价格
         position_limit: 100.0,// 持仓限制
         terminal_time: 3600.0,// 1小时
-        A:140,
-        dt = 1/terminal_time
+        A:200.0,
+        dt:1.0/3600.0 //config.dt = 1.0 / config.terminal_time;
     };
 
     // 初始化策略
-    let mut strategy = AvellanedaStoikov::new(config);
+    let mut strategy = AvellanedaStoikov::new(config.clone());
     let initial_price = 100.0;
     let simulator_volatility = 0.001;
     let mut simulator = MarketSimulator::new(initial_price, simulator_volatility);
@@ -283,14 +285,14 @@ pub fn main() {
         positions.push(strategy.state.position);
         
         // 计算风险指标
-        let (position_risk, spread_risk) = strategy.calculate_risk_metrics();
+        let (position_risk, _spread_risk) = strategy.calculate_risk_metrics();
 
         // 执行交易
         let trade_size = 1.0;
         strategy.execute_trade_if_probable(&quotes, trade_size);
         
         // 打印状态
-        println!("Price: {:.2}, Bid: {:.2}, Ask: {:.2}, Position: {:.2}, Risk: {:.2}", 
+        println!("Price: {:.3}, Bid: {:.3}, Ask: {:.3}, Position: {:.3}, Risk: {:.3}", 
             new_price,
             quotes.bid,
             quotes.ask,
