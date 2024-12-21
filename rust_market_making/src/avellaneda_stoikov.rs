@@ -9,6 +9,8 @@ struct Config {
     initial_price: f64, // 初始价格
     position_limit: f64,// 持仓限制
     terminal_time: f64, // 终止时间(秒)
+    A: f64, // 交易概率系数:P=A⋅e −λ
+    dt: f64, // 时间步长
 }
 
 // 市场状态
@@ -96,7 +98,7 @@ impl AvellanedaStoikov {
     // 处理成交
     // ... existing code ...
 
-// 处理成交
+    // 处理成交
     fn handle_trade(&mut self, price: f64, size: f64, is_buy: bool) {
         let position_delta = if is_buy { size } else { -size };
         let new_position = self.state.position + position_delta;
@@ -113,7 +115,23 @@ impl AvellanedaStoikov {
         }
     }
 
-// ... existing code ...
+    // 分别计算交易概率
+    fn calculate_trade_probability(&self,quotes::&Quote) -> (f64,f64){
+        let delta_a = quotes.ask - self.state.current_price;
+        let lambda_a = self.config.A * (-self.config.k *delta_a ).exp(); // Rust中使用exp函数计算e的幂
+        let prob_ask = lambda_a * self.config.dt;
+
+        let delta_b = self.state.current_price - quotes.bid;
+        let lambda_b = self.config.A * (-self.config.k * delta_b).exp();
+        let prob_bid = lambda_b * self.config.dt;
+        // 使用泊松分布公式 P = A * e^(-λ)
+        //λ = k * detla
+        //let probability = self.condig.A * (-lambda).exp();
+
+        (prob_bid,prob_ask)
+        
+    }
+
     // 风险度量
     fn calculate_risk_metrics(&self) -> (f64, f64) {
         let position_risk = self.state.position.abs() * 
@@ -125,6 +143,36 @@ impl AvellanedaStoikov {
             
         (position_risk, spread_risk)
     }
+
+    // 执行交易如果符合概率
+    fn execute_trade_if_probable(&mut self, quotes: &Quote,trade_size: f64) {
+        let new_price = self.state.current_price
+        // 计算交易概率
+        let prob_bid,prob_ask = self.calculate_trade_probability(quotes);
+        let mut rng = rand::thread_rng();
+        let random_value_bid: f64 = rng.gen::<f64>(); // 生成一个 [0.0, 1.0) 的随机数
+        let random_value_ask: f64 = rng.gen::<f64>(); // 生成一个 [0.0, 1.0) 的随机数
+
+        // 根据随机数和交易概率决定是否执行交易
+        if random_value_bid < prob_bid && random_value_ask > prob_ask{
+            // 执行买入
+            self.handle_trade(new_price, trade_size, true); // 执行买入
+            println!("Executed Buy: Price: {:.2}, Size: {:.2}", new_price, trade_size);
+        } else if random_value_bid > prob_bid && random_value_ask < prob_bid{
+            // 执行卖出
+            self.handle_trade(new_price, trade_size, false); // 执行卖出
+            println!("Executed Sell: Price: {:.2}, Size: {:.2}", new_price, trade_size);
+        } else if random_value_bid > prob_bid && random_value_ask > prob_bid{
+            //什么都不做
+            println!("No trade executed: Price: {:.2}, Size: {:.2}", new_price, trade_size);
+        }else{
+            //同时买卖
+            self.handle_trade(new_price, trade_size, true); // 执行买入
+            self.handle_trade(new_price, trade_size, false); // 执行卖出
+            println!("Executed Buy and Sell: Price: {:.2}, Size: {:.2}", new_price, trade_size);
+        }
+        
+    }
 }
 
 // 模拟市场环境
@@ -132,6 +180,11 @@ struct MarketSimulator {
     current_price: f64,
     volatility: f64,
 }
+
+// struct SimulatorConfig {
+//     initial_price: f64,
+//     volatility:f64
+// }
 
 impl MarketSimulator {
     fn new(initial_price: f64, volatility: f64) -> Self {
@@ -194,6 +247,8 @@ pub fn main() {
         initial_price: 100.0, // 初始价格
         position_limit: 100.0,// 持仓限制
         terminal_time: 3600.0,// 1小时
+        A:140,
+        dt = 1/terminal_time
     };
 
     // 初始化策略
@@ -209,7 +264,7 @@ pub fn main() {
     let mut positions = Vec::new();
 
     // 模拟交易循环1h
-    let simulation_time = 10*60;
+    let simulation_time = config.terminal_time as usize;
     for _ in 0..simulation_time {  // 每秒一次报价
         // 更新市场价格
         let new_price = simulator.update_price();
@@ -217,6 +272,9 @@ pub fn main() {
 
         // 获取新的报价
         let quotes = strategy.get_quotes();
+
+        //执行概率交易
+        
 
         // 收集数据
         prices.push(new_price);
@@ -227,6 +285,10 @@ pub fn main() {
         // 计算风险指标
         let (position_risk, spread_risk) = strategy.calculate_risk_metrics();
 
+        // 执行交易
+        let trade_size = 1.0;
+        strategy.execute_trade_if_probable(&quotes, trade_size);
+        
         // 打印状态
         println!("Price: {:.2}, Bid: {:.2}, Ask: {:.2}, Position: {:.2}, Risk: {:.2}", 
             new_price,
