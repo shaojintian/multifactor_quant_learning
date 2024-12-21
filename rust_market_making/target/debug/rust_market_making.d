@@ -1,1 +1,1 @@
-/Users/wanting/Downloads/multifactor_quant_learning/rust_market_making/target/debug/rust_market_making: /Users/wanting/Downloads/multifactor_quant_learning/rust_market_making/src/main.rs
+/Users/wanting/Downloads/multifactor_quant_learning/rust_market_making/target/debug/rust_market_making: /Users/wanting/Downloads/multifactor_quant_learning/rust_market_making/src/avellaneda_stoikov.rs /Users/wanting/Downloads/multifactor_quant_learning/rust_market_making/src/main.rs

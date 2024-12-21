@@ -141,7 +141,7 @@ impl MarketSimulator {
     }
 }
 
-fn main() {
+pub fn main() {
     // 策略配置
     let config = Config {
         gamma: 0.1,           // 风险厌恶系数
