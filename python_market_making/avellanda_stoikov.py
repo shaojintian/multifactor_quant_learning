@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 12 16:40:52 2024
+Created on Thu Dec 12 16:40:52 2024
 
 @author: enzoshao
 
@@ -49,6 +49,8 @@ for i in range(1, Sim+1):
     spread = np.zeros((M+1,I))
     deltaB = np.zeros((M+1,I))
     deltaA = np.zeros((M+1,I))
+    BidSize = np.zeros((M+1,I))
+    AskSize = np.zeros((M+1,I)) 
     q = np.zeros((M+1,I))
     w = np.zeros((M+1,I))
     equity = np.zeros((M+1,I))
@@ -59,6 +61,8 @@ for i in range(1, Sim+1):
     ReservPrice[0] = S0
     Bid[0] = S0
     Ask[0] = S0
+    BidSize[0] = np.random.uniform(0.1, 10)
+    AskSize[0] = np.random.uniform(0.1, 10)
     spread[0] = 0
     deltaB[0] = 0
     deltaA[0] = 0
@@ -69,10 +73,21 @@ for i in range(1, Sim+1):
     for t in range(1, M+1):
         z = np.random.standard_normal(I)
         S[t] = S[t-1] + sigma * math.sqrt(dt) * z
-        ReservPrice[t] = S[t] - q[t-1] * gamma * (sigma ** 2) * (T - t/float(M)) 
+        
+        # 更新买卖订单量
+        BidSize[t] = np.random.uniform(0.1, 10)
+        AskSize[t] = np.random.uniform(0.1, 10)
+        
+        # 使用订单量计算micro price
+        micro_price = (Bid[t-1] * AskSize[t] + Ask[t-1] * BidSize[t]) / (BidSize[t] + AskSize[t])
+        fair_value = S[t]
+        inventory_risk_adjustment = q[t-1] * gamma * (sigma ** 2) * (T - t/float(M))
+        ReservPrice[t] = fair_value - inventory_risk_adjustment
+
+        
         spread[t] = gamma * (sigma **2) * (T - t/float(M)) + (2/gamma) * math.log(1 + (gamma/k))
-        Bid[t] = ReservPrice[t] - spread[t]/2.     
-        Ask[t] = ReservPrice[t] + spread[t]/2.     
+        Bid[t] = ReservPrice[t] - (spread[t]/2 + q[t-1] * gamma * (sigma ** 2) * (T - t/float(M)))     
+        Ask[t] = ReservPrice[t] + (spread[t]/2 - q[t-1] * gamma * (sigma ** 2) * (T - t/float(M)))     
         
         deltaB[t] = S[t] - Bid[t]     
         deltaA[t] = Ask[t] - S[t]
