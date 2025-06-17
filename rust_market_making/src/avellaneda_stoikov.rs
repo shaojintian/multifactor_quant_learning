@@ -41,6 +41,7 @@ impl AvellanedaStoikov {
         let state = MarketState {
             current_price: config.initial_price,
             position: 0.0,
+            cash:1000.0,
             start_time: SystemTime::now(),
         };
         
@@ -177,6 +178,11 @@ impl AvellanedaStoikov {
             self.handle_trade(new_price, trade_size, false); // 执行卖出
             println!("Executed Buy and Sell: Price: {:.2}, Size: {:.2}", new_price, trade_size);
         }
+    }
+    // 计算 PnL 的辅助函数
+    fn calculate_pnl(&self, current_price: f64) -> f64 {
+        let pnl = self.state.cash + current_price * self.state.position;
+        pnl
         
     }
 }
@@ -211,7 +217,7 @@ impl MarketSimulator {
     }
 }
 
-fn plot_results(prices: &[f64], bids: &[f64], asks: &[f64], positions: &[f64], pnl:[f64] filename: &str) {
+fn plot_results(prices: &[f64], bids: &[f64], asks: &[f64], positions: &[f64], pnl:&[f64] ,filename: &str) {
     let root = BitMapBackend::new(filename, (640, 480)).into_drawing_area();
     root.fill(&WHITE).unwrap();
 
@@ -243,18 +249,19 @@ fn plot_results(prices: &[f64], bids: &[f64], asks: &[f64], positions: &[f64], p
         .label("Position")
         .legend(|(x, y)| PathElement::new(vec![(x, y)], &BLACK));
 
-    chart.draw_series(LineSeries::new(positions.iter().enumerate().map(|(x, &y)| (x as u32, y)), &BLACK)).unwrap()
+    chart.draw_series(LineSeries::new(pnl.iter().enumerate().map(|(x, &y)| (x as u32, y)), &BLACK)).unwrap()
         .label("PNL")
         .legend(|(x, y)| PathElement::new(vec![(x, y)], &YELLOW));
 
+    // 配置图例
+    chart.configure_series_labels()
+        .border_style(&BLACK)
+        .draw()
+        .unwrap();
+
 }
 
-// 计算 PnL 的辅助函数
-fn calculate_pnl(&self, current_price: f64) -> f64 {
-    let pnl = self.cash + current_price * self.state.position;
-    pnl
-        
-}
+
 
 pub fn main() {
     // 策略配置
@@ -280,7 +287,7 @@ pub fn main() {
     let mut bids = Vec::new();
     let mut asks = Vec::new();
     let mut positions = Vec::new();
-    let mut pnl = Vec::new();
+    let mut pnls = Vec::new();
 
     // 模拟交易循环1h
     let simulation_time = config.terminal_time as usize;
@@ -291,16 +298,13 @@ pub fn main() {
 
         // 获取新的报价
         let quotes = strategy.get_quotes();
-
-        //执行概率交易
         
-
         // 收集数据
         prices.push(new_price);
         bids.push(quotes.bid);
         asks.push(quotes.ask);
         positions.push(strategy.state.position);
-        pnl.push(calculate_pnl(&pnl, new_price));
+        pnls.push(strategy.calculate_pnl(new_price));
         
         // 计算风险指标
         let (position_risk, _spread_risk) = strategy.calculate_risk_metrics();
@@ -310,17 +314,18 @@ pub fn main() {
         strategy.execute_trade_if_probable(&quotes, trade_size);
         
         // 打印状态
-        println!("Price: {:.3}, Bid: {:.3}, Ask: {:.3}, Position: {:.3}, Risk: {:.3}", 
+        println!("Price: {:.3}, Bid: {:.3}, Ask: {:.3}, Position: {:.3}, Risk: {:.3},PNL: {:.3}", 
             new_price,
             quotes.bid,
             quotes.ask,
             strategy.state.position,
-            position_risk
+            position_risk,
+            pnls.last().unwrap()
         );
 
         // 模拟等待1秒
-        std::thread::sleep(std::time::Duration::from_secs(1));
+        //std::thread::sleep(std::time::Duration::from_secs(1));
     }
     //
-    plot_results(&prices, &bids, &asks, &positions, &pnl,"market_making_results.png");
+    plot_results(&prices, &bids, &asks, &positions, &pnls,"market_making_results_new.png");
 }

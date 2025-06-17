@@ -30,7 +30,7 @@ def normalize_factor(factor: pd.Series, window: int = 2000) -> pd.Series:
         _factor = _factor.clip(-3, 3)
     else:
         # Use rolling mean and std
-        _factor = ((factor - factor.rolling(window=window).mean()) / factor.rolling(window=window).std()).clip(-3, 3)
+        _factor = ((factor - factor.rolling(window=window).mean()) / (factor.rolling(window=window).std() + 1e-9)).clip(-3,3)
 
     #print(_factor.describe())
     return _factor.fillna(0)
