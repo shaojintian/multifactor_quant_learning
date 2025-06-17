@@ -76,7 +76,7 @@ def calculate_vwap_rank_zscore(series: pd.DataFrame, window: int = 20) -> pd.Ser
     neg_rank = -rank
     zscore = (neg_rank - neg_rank.rolling(window).mean()) / (neg_rank.rolling(window).std(ddof=1) + 1e-9)
     fct = normalize_factor(zscore)
-    return fct.where(fct.abs() > 2.7, 0)
+    return np.tanh(fct) * 1.5  # 平滑压缩为 [-1.5, 1.5]
 def factor_vol_adj_momentum(df: pd.DataFrame, n: int = 20) -> pd.Series:
     """
     计算波动率调节的动量因子
