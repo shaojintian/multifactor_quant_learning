@@ -81,7 +81,7 @@ print(ret.describe())
 #alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
     filtered_df, 
-    factor_logic_func= calculate_optimized_position_v2 , 
+    factor_logic_func= calculate_advanced_ma , 
 )
 print(final_frame.columns)
 # single_factor = volatility_factor

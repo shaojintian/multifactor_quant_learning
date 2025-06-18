@@ -151,7 +151,7 @@ print("\n开始进行遗传编程因子挖掘...")
 est_gp = SymbolicRegressor(
     population_size=1000,         # 种群大小：每一代有多少个备选因子
     generations=20,               # 进化代数
-    stopping_criteria=0.01,       # 停止标准：当适应度（metric）达到这个值时提前停止
+    stopping_criteria=0.95,       # 停止标准：当适应度（metric）达到这个值时提前停止
     p_crossover=0.7,              # 交叉概率
     p_subtree_mutation=0.1,       # 子树变异概率
     p_hoist_mutation=0.05,        # 提升变异概率
@@ -160,7 +160,7 @@ est_gp = SymbolicRegressor(
     verbose=1,                    # 显示训练过程
     feature_names=feature_names,  # 特征名称，用于显示最终公式
     function_set=user_function_set, # 使用我们定义的函数集
-    metric='spearman', # 优化目标：平均绝对误差。也可以是 'spearman' 或 'pearson'
+    metric='pearson', # 优化目标：平均绝对误差。也可以是 'spearman' 或 'pearson'
     const_range=(-1., 1.),        # 公式中可以使用的常数范围
     random_state=42,              # 随机种子，保证结果可复现
     n_jobs=-1                     # 使用所有CPU核心并行计算
@@ -180,10 +180,8 @@ print("="*50)
 final_population = est_gp._programs[-1]
 
 # 2. 过滤掉适应度为无效值(None或nan)的个体，以防排序出错
-from gplearn.genetic import Program
 valid_population = [
     p for p in final_population
-    if isinstance(p, Program) and hasattr(p, 'raw_fitness_') and p.raw_fitness_ is not None and not np.isnan(p.raw_fitness_)
 ]
 
 # 3. 根据原始适应度(raw_fitness_)对种群进行排序

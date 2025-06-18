@@ -50,6 +50,7 @@ import datetime
 filtered_df = z
 filtered_df.index = pd.to_datetime(filtered_df.index, unit='ms', utc=True)
 filtered_df = preprocess_data(filtered_df)
+#filtered_df = filtered_df.loc[filtered_df.index > pd.Timestamp("2020-06-01").tz_localize("UTC")]
 #z.head()
 
 # %%
@@ -84,11 +85,23 @@ final_frame = add_factor(
     final_frame, 
     factor_logic_func=calculate_multi_period_momentum_filter_hourly , 
 )
+final_frame = add_factor(
+    final_frame, 
+    factor_logic_func=calculate_complex_factor_corrected , 
+)
+final_frame = add_factor(
+    final_frame,    
+    factor_logic_func=calculate_advanced_ma ,
+)
+final_frame = add_factor(
+    final_frame,
+    factor_logic_func=calculate_ma,
+)
 # single_factor = volatility_factor
 # single_factor = adaptive_momentum_factor
 
 print("\n--- 多因子组合 ---")
-final_factor = combine_factors_linear(final_frame, factor_cols=['calculate_optimized_position_v2',"calculate_multi_period_momentum_filter_hourly"],weights=[0.8,0.2]) 
+final_factor = combine_factors_lightgbm(final_frame, factor_cols=final_frame.columns[-5:],weights=[0.25,0.25,0.25,0.25]) 
 #final_factor = alphas.alpha004()  # 选择 Alpha#101 作为单因子
 print("\n--- 原始多因子统计 ---")
 print(final_factor.describe())
@@ -143,7 +156,7 @@ plt.ylabel("Net Value")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.show()
+# plt.show()
 
 
 
@@ -170,3 +183,11 @@ print(f"年化夏普比率 (Annualized Sharpe Ratio): {sharp:.4f}")
 from util.max_drawdown import calculate_max_drawdown
 max_drawdown = calculate_max_drawdown(cleaned_net_values)
 print(f"最大回撤 (Max Drawdown): {max_drawdown:.2%}")
+
+plt.figtext(0.5, 0.95, f"Annualized Sharpe Ratio: {sharp:.4f}", ha="center", fontsize=12, color="blue")
+
+# 图下方显示最大回撤
+plt.figtext(0.5, 0.01, f"Max Drawdown: {max_drawdown:.2%}", ha="center", fontsize=12, color="red")
+
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # 预留上下空间避免覆盖
+plt.show()

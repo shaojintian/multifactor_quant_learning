@@ -225,7 +225,7 @@ def calculate_optimized_position(
     # This adds robustness and controls risk. Then we scale by our desired max leverage.
     final_position = np.tanh(alpha_signal) * max_leverage
     
-    return normalize_factor_quantile(alpha_signal)
+    return normalize_factor(alpha_signal)
 
 
 #reverse
@@ -349,9 +349,9 @@ def calculate_optimized_position_v2(
 
     # 5. Scale and smooth the final position
     # np.tanh squashes the signal into a [-1, 1] range, controlling risk.
-    final_position = np.tanh(alpha_signal) * max_leverage
-    
-    return normalize_factor(alpha_signal)  # Round for cleanliness
+    final_position = normalize_factor(alpha_signal) 
+    #final_position = np.tanh(final_position) * 3
+    return final_position  # Round for cleanliness
 
 
 
@@ -811,6 +811,44 @@ def create_breakout_trend_factor(
     factor.name = f'breakout_trend_factor_{window}_{n_std}'
     return normalize_factor(factor).where(factor.abs() > 2, 0)  # 只保留绝对值大于0.1的信号
 
+
+def calculate_complex_factor_corrected(df: pd.DataFrame) -> pd.Series:
+    """
+    Calculates a corrected version of the factor to avoid math errors.
+
+    Corrected Formula: volatility**2 * log(abs((log(close / high))**3))
+
+    This version takes the absolute value before the final logarithm
+    to ensure the input is positive.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame containing 'close', 'high', and 'volatility' columns.
+
+    Returns:
+        pd.Series: The calculated factor series.
+    """
+    df = df.copy()
+    if 'volatility' not in df.columns:
+        raise ValueError("Input DataFrame must contain a 'volatility' column.")
+
+    # Step 1: div(close, high)
+    div_ch = df['close'] / (df['high']+1e-9)  # 防止除以零
+
+    # Step 2: log(div(close, high))
+    log_div = np.log(div_ch)
+
+    # Step 3: (log(div(close, high)))**3
+    log_div_cubed = log_div ** 3
+    
+    # Step 4: log of the ABSOLUTE VALUE of the result from Step 3
+    # This correction prevents math errors.
+    log_of_abs_cubed = np.log(np.abs(log_div_cubed))
+    
+    # Step 5: Multiply by volatility squared
+    factor = -df['volatility'].pow(2) * log_of_abs_cubed
+    
+    factor.name = 'complex_factor_corrected'
+    return normalize_factor(factor)
 
 # 使用示例 (假设你有一个名为 df 的 DataFrame)
 # df = pd.read_csv('your_crypto_data.csv', index_col='timestamp', parse_dates=True)

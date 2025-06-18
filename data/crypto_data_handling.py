@@ -5,20 +5,40 @@ project_root = "/Users/wanting/Downloads/multifactor_quant_learning"
 sys.path.append(project_root)
 
 def convert_column_names_to_lowercase(folder_path):
-    # 遍历文件夹中的所有文件
-    for filename in os.listdir(folder_path):
-        if filename.endswith('.csv'):
-            file_path = os.path.join(folder_path, filename)
-            # 读取 CSV 文件
-            df = pd.read_csv(file_path)
-            
-            # 将列名转换为小写
-            df.columns = df.columns.str.lower()
-            
-            # 将修改后的 DataFrame 保存回 CSV 文件
-            df.to_csv(file_path, index=False)
-            print(f"Processed file: {filename}")
+    # 遍历文件夹及其所有子目录
+    for root, _, files in os.walk(folder_path):
+        for filename in files:
+            if filename.endswith('.csv'):
+                file_path = os.path.join(root, filename)
+                try:
+                    df = pd.read_csv(file_path)
+                    df.columns = df.columns.str.lower()
+                    df.to_csv(file_path, index=False)
+                    print(f"Processed file: {file_path}")
+                except Exception as e:
+                    print(f"Failed to process {file_path}: {e}")
 
-# 指定 crypto 文件夹的路径
-folder_path = 'data/crypto'  # 请根据实际路径修改
-convert_column_names_to_lowercase(folder_path)
+# 替换为你的目标路径
+folder_path = '/Users/wanting/Downloads/multifactor_quant_learning/data/futures/um/monthly/klines'
+
+
+def concat_files_in_folder(folder_path):
+    #TODO
+    all_files = []
+    for root, _, files in os.walk(folder_path):
+        for file in files:
+            if file.endswith('.csv'):
+                all_files.append(os.path.join(root, file))
+    
+    if not all_files:
+        print("No CSV files found in the specified folder.")
+        return None
+    
+    combined_df = pd.concat((pd.read_csv(f) for f in all_files), ignore_index=True)
+    return combined_df
+
+
+if __name__ == "__main__":
+    # 先转换列名为小写
+    #convert_column_names_to_lowercase(folder_path)
+    concat_files_in_folder(folder_path)

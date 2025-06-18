@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
-from model.random_forest import combine_factors_nonlinear
-import seaborn as sns
+# # from model.random_forest import combine_factors_nonlinear
+# import seaborn as sns
 from matplotlib import pyplot as plt
 from util.norm import normalize_factor
 from util.decorator import print_variable_shapes
+from sklearn.linear_model import LinearRegression
 
 def risk_orthogonalization(factors: pd.DataFrame) -> pd.DataFrame:
     """
@@ -15,29 +16,42 @@ def risk_orthogonalization(factors: pd.DataFrame) -> pd.DataFrame:
     2. 进行特征值分解
     3. 重构正交因子
     """
-    # 1. 计算相关性矩阵
-    corr_matrix = factors.corr()
 
     #1.1 可视化因子相关性
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
-    plt.title(u"factor correlation heatmap before orthogonalization")
-    plt.show()
+    # plt.figure(figsize=(10, 8))
+    # sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
+    # plt.title(u"factor correlation heatmap before orthogonalization")
+    # plt.show()
+    print("--- risk orthogonalization ---")
+    df = factors.copy()
     
     # 2. 特征值分解
-    eigenvalues, eigenvectors = np.linalg.eigh(corr_matrix)
+    df_ortho = pd.DataFrame(index=df.index)
     
-    # 3. 正交化处理
-    orthogonal_factors = pd.DataFrame(
-        np.dot(factors, eigenvectors),
-        index=factors.index,
-        columns=[f'orthogonal_factor_{i}' for i in range(len(factors.columns))]
-    )
+    factor_cols = df.columns
+    
+    for i, factor_name in enumerate(factor_cols):
+        current_factor = df[factor_name].values.reshape(-1, 1)
+        
+        if i == 0: # 第一个因子作为基准，直接保留
+            df_ortho[f"{factor_name}_ortho"] = current_factor
+        else:
+            # 用之前的正交因子对当前因子做回归
+            base_factors = df_ortho.iloc[:, :i].values
+            
+            model = LinearRegression(fit_intercept=False) # 通常不包含截距项
+            model.fit(base_factors, current_factor)
+            
+            # 残差即为正交化后的新因子
+            residuals = current_factor - model.predict(base_factors)
+            df_ortho[f"{factor_name}_ortho"] = residuals
+            
+    return df_ortho.fillna(0)  # 填充可能的NaN值
     #4. 可视化正交化前后的因子相关性
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(orthogonal_factors.corr(), annot=True, cmap='coolwarm')
-    plt.title(u"factor correlation heatmap after orthogonalization")
-    plt.show()
+    # plt.figure(figsize=(10, 8))
+    # sns.heatmap(orthogonal_factors.corr(), annot=True, cmap='coolwarm')
+    # plt.title(u"factor correlation heatmap after orthogonalization")
+    # plt.show()
     return orthogonal_factors
 
 
