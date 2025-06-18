@@ -19,6 +19,7 @@
 # 在文件最开头添加以下代码
 import os
 import sys
+
 # 正确的写法：
 project_root = "/Users/wanting/Downloads/multifactor_quant_learning"
 sys.path.append(project_root)
@@ -29,6 +30,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from util.norm import normalize_factor
 from util.sharpe_calculatio import cal_sharp_random,calculate_sharpe_ratio_corrected
+from util import calculate_max_drawdown
 from calculate_net_vaules import cal_net_values, cal_net_values_before_rebate,cal_net_values_compounded
 # from verify_risk_orthogonalization import risk_orthogonalization # 不再需要风险正交
 pd.plotting.register_matplotlib_converters()
@@ -76,7 +78,7 @@ print(ret.describe())
 #alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
     filtered_df, 
-    factor_logic_func= calculate_optimized_position , 
+    factor_logic_func= calculate_optimized_position_v2 , 
 )
 # single_factor = volatility_factor
 # single_factor = adaptive_momentum_factor
@@ -156,3 +158,9 @@ sharp = calculate_sharpe_ratio_corrected(cleaned_net_values,period_minutes=_peri
 
 print(f"\n--- 策略表现评估 ({final_factor.name}) ---")
 print(f"年化夏普比率 (Annualized Sharpe Ratio): {sharp:.4f}")
+
+max_drawdown = calculate_max_drawdown(cleaned_net_values)
+print(f"最大回撤 (Max Drawdown): {max_drawdown:.2%}")
+
+turnover = final_factor.diff().abs().sum() / final_factor.abs().sum()
+print(f"年化换手率 (Annualized Turnover): {turnover:.2%}")

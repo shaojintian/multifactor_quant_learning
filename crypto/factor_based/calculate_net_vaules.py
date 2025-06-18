@@ -17,12 +17,19 @@ def cal_net_values(pos: pd.Series, ret: pd.Series) -> pd.Series:
     # 使用 np.hstack 组合当前仓位和仓位变化
     position_changes = pos.diff().fillna(0)
 
-    # 小于手续费的不执行交易，手续费为 0
-    should_trade = np.abs(position_changes) > fee  # boolean mask
+    # 小于手续费的不执行交易，手续费为 0 仓位变化大于50%
+    should_trade = np.abs(position_changes) > 1000 * fee  # boolean mask 0.5
+    # 实际持仓：不交易时，仓位用前一时刻仓位；交易时用当前仓位
+    effective_pos = pos.copy()
+    effective_pos[~should_trade] = pos.shift(1)[~should_trade]
+
+    print("--effective_pos--", effective_pos.describe)
+
+    # 手续费，只有交易时收
     effective_fee = np.where(should_trade, np.abs(position_changes) * fee, 0)
 
-    # 最终净值计算
-    net_values = 1 + (pos * ret - effective_fee).cumsum()
+    # 净值计算
+    net_values = 1 + (effective_pos * ret - effective_fee).cumsum()
 
     #fill 1
     net_values = net_values.dropna()
@@ -36,11 +43,16 @@ def cal_net_values_before_rebate(pos: pd.Series, ret: pd.Series) -> pd.Series:
     pos: 仓位ratio[-300%,300%]
     ret: 未来1个周期的收益率
     '''
-    fee = 0.0002  # 仓位每次变动的滑损(maker 0.02%， taker 0.05%)
+    fee = 0.0005  # 仓位每次变动的滑损(maker 0.02%， taker 0.05%)
     # 使用 np.hstack 组合当前仓位和仓位变化
+    # 小于手续费的不执行交易，手续费为 0 仓位变化大于50%才交易
     position_changes = np.hstack((pos.iloc[0] - 0, np.diff(pos)))
+    should_trade = np.abs(position_changes) > 1000 * fee  # boolean mask 0.5
+    
+    effective_pos = pos.copy()
+    effective_pos[~should_trade] = pos.shift(1)[~should_trade]
     # 计算净值
-    net_values = 1 + (pos * ret ).cumsum()
+    net_values = 1 + (effective_pos * ret ).cumsum()
 
     #fill 1
     net_values = net_values.dropna()

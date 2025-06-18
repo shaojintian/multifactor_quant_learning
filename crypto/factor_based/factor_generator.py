@@ -1,7 +1,7 @@
 from typing import Optional
 import pandas as pd
 import numpy as np
-from util.norm import normalize_factor
+from util.norm import *
 
 # --- 1. 定义各种因子的计算逻辑 (作为独立的函数) ---
 
@@ -225,49 +225,8 @@ def calculate_optimized_position(
     # This adds robustness and controls risk. Then we scale by our desired max leverage.
     final_position = np.tanh(alpha_signal) * max_leverage
     
-    return final_position.round(4) # Round for cleanliness
+    return normalize_factor_quantile(alpha_signal)
 
-def combine_factors(factor_df: pd.DataFrame,
-                    weights: dict = None,
-                    method: str = "clip",
-                    clip_threshold: float = 3.0) -> pd.Series:
-    """
-    输入多个因子，输出组合因子（路径组合）
-
-    参数:
-        factor_df: DataFrame，列是多个因子
-        weights: dict[str, float]，因子组合权重（默认为等权）
-        method: str, 非线性方法，支持 'tanh' 或 'clip'
-        clip_threshold: float, 非线性变换的阈值
-
-    返回:
-        包含原始因子和组合因子的 DataFrame
-    """
-    factor_df = factor_df.copy()
-
-    # 默认等权
-    if weights is None:
-        weights = {col: 1.0 for col in factor_df.columns}
-
-    # 标准化每个因子
-    for col in factor_df.columns:
-        fct = factor_df[col]
-        z = (fct - fct.mean()) / (fct.std() + 1e-9)
-        factor_df[col] = z
-
-    # 权重组合
-    combo = sum(weights[col] * factor_df[col] for col in weights)
-
-    # 非线性变换
-    if method == "tanh":
-        combo = np.tanh(combo) * clip_threshold
-    elif method == "clip":
-        combo = combo.clip(lower=-clip_threshold, upper=clip_threshold)
-
-    # 只保留高置信度信号
-    combo = combo.where(combo.abs() > (clip_threshold * 0.7), 0)
-
-    return combo
 
 #reverse
 def calculate_reversal_factor_with_trend_filter(series: pd.DataFrame, 
@@ -314,6 +273,87 @@ def calculate_reversal_factor_with_trend_filter(series: pd.DataFrame,
     final_factor = filtered_factor.where(filtered_factor.abs() > 2,0).clip(-clip_value, clip_value)
 
     return final_factor
+
+
+def calculate_optimized_position_v2(
+    df: pd.DataFrame, 
+    fast_window: int = 12, 
+    slow_window: int = 26, 
+    vol_window: int = 60,
+    max_leverage: float = 1.5,
+    strategy: str = 'risk_averse' # Options: 'risk_averse', 'trend_acceleration', 'regime_filter'
+) -> pd.Series:
+    """
+    Calculates a target position based on a dual-EMA momentum signal, with
+    selectable volatility-based sizing strategies.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing at least a 'close' column.
+        fast_window (int): Lookback window for the fast EMA.
+        slow_window (int): Lookback window for the slow EMA.
+        vol_window (int): Lookback window for volatility calculation.
+        max_leverage (float): The maximum position size (e.g., 1.5 = 1.5x leverage).
+        strategy (str): The position sizing strategy to use.
+            - 'risk_averse': Original logic. Position is inversely proportional to volatility.
+            - 'trend_acceleration': Position is directly proportional to volatility.
+            - 'regime_filter': Uses volatility level to decide whether to take a signal.
+
+    Returns:
+        pd.Series: The calculated target position for each time step.
+    """
+    if "close" not in df.columns:
+        raise ValueError("Input DataFrame must contain a 'close' column.")
+
+    # 1. Calculate Fast and Slow Exponential Moving Averages (EMAs)
+    fast_ema = df["close"].ewm(span=fast_window, adjust=False).mean()
+    slow_ema = df["close"].ewm(span=slow_window, adjust=False).mean()
+
+    # 2. Create the raw momentum signal (normalized spread)
+    raw_signal = (fast_ema - slow_ema) / slow_ema
+
+    # 3. Calculate market volatility (smoother EWM of standard deviation)
+    log_returns = np.log(df["close"] / df["close"].shift(1))
+    market_vol = log_returns.ewm(span=vol_window, adjust=False).std()
+
+    # 4. Apply the chosen sizing strategy to create the "alpha"
+    alpha_signal = pd.Series(np.nan, index=df.index) # Initialize
+
+    if strategy == 'risk_averse':
+        # Original logic: Decrease position in high vol
+        alpha_signal = raw_signal / market_vol
+        
+    elif strategy == 'trend_acceleration':
+        # New logic: INCREASE position in high vol to capture trends
+        # We scale by a constant (e.g., 100) to bring the signal into a reasonable
+        # range before the tanh squashing function. This is a tunable parameter.
+        alpha_signal = raw_signal 
+    
+    elif strategy == 'regime_filter':
+        # Hybrid logic: Use vol to filter signal
+        # Only take a signal if volatility is above its own moving average (i.e., in a high-vol state)
+        vol_ma = market_vol.ewm(span=vol_window * 2, adjust=False).mean()
+        in_high_vol_regime = (market_vol > vol_ma)
+        
+        # Scale the raw signal; this becomes the base for our position
+        # A simple scalar can be used, or it can be a function of vol itself
+        scaled_raw_signal = raw_signal * 10 # Tunable scalar
+        
+        # Only apply the signal when in the high-vol regime
+        alpha_signal = scaled_raw_signal.where(in_high_vol_regime, 0)
+        
+    else:
+        raise ValueError("Invalid strategy. Choose from 'risk_averse', 'trend_acceleration', 'regime_filter'.")
+
+    alpha_signal.replace([np.inf, -np.inf], np.nan, inplace=True)
+    alpha_signal.fillna(0, inplace=True)
+
+    # 5. Scale and smooth the final position
+    # np.tanh squashes the signal into a [-1, 1] range, controlling risk.
+    final_position = np.tanh(alpha_signal) * max_leverage
+    
+    return normalize_factor(alpha_signal)  # Round for cleanliness
+
+
 
 def factor_volume_weighted_reversion(df: pd.DataFrame, period: int = 14) -> pd.Series:
     """
