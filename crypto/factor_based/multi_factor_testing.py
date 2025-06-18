@@ -77,7 +77,7 @@ print(ret.describe())
 #alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
     filtered_df, 
-    factor_logic_func=calculate_optimized_position , 
+    factor_logic_func=calculate_optimized_position_v2 , 
 )
 
 final_frame = add_factor(
@@ -88,7 +88,7 @@ final_frame = add_factor(
 # single_factor = adaptive_momentum_factor
 
 print("\n--- 多因子组合 ---")
-final_factor = combine_factors_linear(final_frame, factor_cols=['calculate_optimized_position',"calculate_multi_period_momentum_filter_hourly"],weights=[0.4,0.6]) 
+final_factor = combine_factors_linear(final_frame, factor_cols=['calculate_optimized_position_v2',"calculate_multi_period_momentum_filter_hourly"],weights=[0.8,0.2]) 
 #final_factor = alphas.alpha004()  # 选择 Alpha#101 作为单因子
 print("\n--- 原始多因子统计 ---")
 print(final_factor.describe())

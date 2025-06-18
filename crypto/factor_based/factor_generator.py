@@ -601,10 +601,10 @@ def calculate_multi_period_momentum_filter_hourly(
     scaled_signal = normalize_factor(raw_momentum_signal)
     
     position.loc[can_go_long] = np.tanh(scaled_signal[can_go_long]) # 使用tanh平滑仓位大小
-    position.loc[can_go_short] = np.tanh(scaled_signal[can_go_short])
+    position.loc[can_go_short] = np.tanh(scaled_signal[can_go_short])  # 做空时取负值
 
     # 对最终仓位进行轻微平滑，防止信号过于频繁地在0和非0之间跳动
-    final_position = position.ewm(span=5, adjust=False).mean()
+    final_position = position.where(position.abs() > 0.1, 0)  # 只保留绝对值大于0.1的信号
 
     return final_position
 
@@ -628,6 +628,194 @@ def generate_signals_with_threshold(factor_series: pd.Series, long_threshold: fl
         
     return signal
 
+
+def create_volatility_band_factor(
+    df: pd.DataFrame, 
+    price_col: str = 'close', 
+    short_window: int = 5, 
+    long_window: int = 14
+) -> pd.Series:
+    """
+    计算波动率期限结构比率，并将其限制在[2, 3]的有效区间内。
+
+    该因子通过计算短期波动率与长期波动率的比值，来捕捉持续的极端行情。
+    它只在比值落入[2, 3]区间时输出信号，其他情况均为0。
+
+    参数:
+    df (pd.DataFrame): 包含价格数据的时间序列DataFrame。
+                         **注意：该函数设计用于日线数据**，因为窗口期以天为单位。
+    price_col (str): DataFrame中表示价格的列名，默认为'close'。
+    short_window (int): 计算短期滚动波动率的窗口期（天数）。
+    long_window (int): 计算长期滚动波动率的窗口期（天数）。
+
+    返回:
+    pd.Series: 波动率带通因子序列。值为0或在[2, 3]区间内。
+    """
+    if price_col not in df.columns:
+        raise ValueError(f"列 '{price_col}' 不在DataFrame中。")
+
+    # 1. 确保数据是日线级别（如果输入是更高频率，需要先重采样）
+    # 为确保计算准确，我们假设输入已经是日线数据。
+    
+    # 2. 计算日收益率
+    daily_returns = df[price_col].pct_change()
+
+    # 3. 计算短期和长期滚动波动率（年化标准差）
+    # 乘以 sqrt(252) 是为了年化，但对于比率计算，此步骤可以省略，因为会被约掉。
+    # 这里我们使用原始标准差，更直观。
+    short_term_vol = daily_returns.rolling(window=short_window).std()
+    long_term_vol = daily_returns.rolling(window=long_window).std()
+
+    # 4. 计算波动率比率
+    # 核心逻辑：当前波动状态 / 历史常态
+    vol_ratio = short_term_vol / long_term_vol
+
+    # 5. 应用[2, 3]带通滤波器
+    # 使用 np.where 实现条件逻辑：
+    # 条件：vol_ratio >= 2 且 vol_ratio <= 3
+    # 如果为真，则因子值 = vol_ratio
+    # 如果为假，则因子值 = 0
+    condition = (vol_ratio >= 2) & (vol_ratio <= 3)
+    band_factor = np.where(condition, vol_ratio, 0)
+
+    # 6. 转换为Pandas Series并处理初始NaN值
+    factor_series = pd.Series(band_factor, index=df.index).fillna(0)
+    
+    # 7. 命名Series以便识别
+    factor_series.name = f'vol_band_{short_window}_{long_window}'
+    
+    return factor_series
+
+
+def create_volatility_band_factor_three_windows(
+    df: pd.DataFrame,
+    price_col: str = 'close',
+    short_window: int = 5*24,
+    medium_window: int = 14*24,
+    long_window: int = 60*24,
+    avg_window: int = 252*24,
+    base_lower: float = 2.0,
+    base_upper: float = 3.0
+) -> pd.Series:
+    """
+    基于短期与中期波动率比值，结合长期波动率平均水平动态调整阈值的波动率带通因子，归一化到[-3,3]，
+    并只保留绝对值大于2的信号捕获极端行情。
+    """
+    if price_col not in df.columns:
+        raise ValueError(f"列 '{price_col}' 不在DataFrame中。")
+
+    daily_returns = df[price_col].pct_change()
+
+    short_vol = daily_returns.rolling(window=short_window).std()
+    medium_vol = daily_returns.rolling(window=medium_window).std()
+    long_vol = daily_returns.rolling(window=long_window).std()
+
+    avg_long_vol = long_vol.rolling(window=avg_window, min_periods=20).mean()
+
+    vol_ratio = short_vol / medium_vol
+
+    scale_factor = avg_long_vol / avg_long_vol.mean()
+
+    factor_series = pd.Series(scale_factor, index=df.index).fillna(0)
+
+    # 归一化因子到[-3,3]
+    normalized_factor = normalize_factor(factor_series)
+
+    # 只保留绝对值大于2的极端行情信号，其余置0
+    extreme_factor = normalized_factor.where(normalized_factor.abs() > 2, 0)
+
+    extreme_factor.name = f'vol_band_norm_extreme_{short_window}_{medium_window}_{long_window}_{avg_window}'
+
+    return extreme_factor
+
+
+
+
+def create_trend_following_vol_factor(
+    df: pd.DataFrame,
+    price_col: str = 'close',
+    short_window: int = 5*24,
+    medium_window: int = 14*24,
+    long_window: int = 60*24, # 保持参数以便比较，但可能不会全用到
+) -> pd.Series:
+    """
+    一个结合了波动率强度和趋势方向的趋势跟踪因子。
+    当市场活跃且存在明显趋势时，因子值会变大。
+    """
+    if price_col not in df.columns:
+        raise ValueError(f"列 '{price_col}' 不在DataFrame中。")
+
+    daily_returns = df[price_col].pct_change()
+
+    # 1. 计算波动率比率作为“市场活跃度”或“信号强度”
+    short_vol = daily_returns.rolling(window=short_window).std()
+    medium_vol = daily_returns.rolling(window=medium_window).std()
+    # 使用 clip(lower=1e-8) 防止除以零
+    vol_ratio = short_vol / medium_vol.clip(lower=1e-8)
+    
+    # 2. 计算中期动量作为“趋势方向”
+    # 用 medium_window 周期内的价格变化百分比来定义趋势
+    momentum = df[price_col].pct_change(periods=medium_window)
+    
+    # 3. 结合强度与方向
+    # np.sign(momentum) 会得到 +1 (上涨趋势), -1 (下跌趋势), 或 0 (无变化)
+    # 乘以 vol_ratio，使得在市场更活跃时，因子绝对值更大
+    trend_factor = vol_ratio * np.sign(momentum)
+    
+    # 对因子进行平滑处理，使其信号更稳定
+    trend_factor_smoothed = trend_factor.ewm(span=short_window, adjust=False).mean()
+    
+    trend_factor_smoothed.name = f'trend_vol_factor_{short_window}_{medium_window}'
+    
+    return trend_factor_smoothed.fillna(0)
+
+
+def create_breakout_trend_factor(
+    df: pd.DataFrame,
+    price_col: str = 'close',
+    window: int = 20*24, # 常用的布林带窗口
+    n_std: float = 2.0   # 标准差倍数
+) -> pd.Series:
+    """
+    基于布林带通道突破的经典趋势跟踪因子。
+    突破上轨产生+1信号，跌破下轨产生-1信号，并持续持有直到趋势反转。
+    """
+    if price_col not in df.columns:
+        raise ValueError(f"列 '{price_col}' 不在DataFrame中。")
+    
+    # 1. 计算布林带的中、上、下轨
+    sma = df[price_col].rolling(window=window).mean()
+    rolling_std = df[price_col].rolling(window=window).std()
+    upper_band = sma + (rolling_std * n_std)
+    lower_band = sma - (rolling_std * n_std)
+    
+    # 2. 生成原始突破信号
+    signal = pd.Series(np.nan, index=df.index)
+    signal[df[price_col] > upper_band] = 1  # 突破上轨，做多
+    signal[df[price_col] < lower_band] = -1 # 跌破下轨，做空
+    
+    # 3. 定义趋势结束条件（可选，但推荐）
+    # 当价格回到中轨时，我们认为趋势可能暂停或反转，清除信号
+    # 做多时，如果价格跌破中轨，平仓
+    long_exit = (df[price_col] < sma)
+    # 做空时，如果价格涨过中轨，平仓
+    short_exit = (df[price_col] > sma)
+    
+    # 将平仓信号位置设置为0
+    signal[long_exit | short_exit] = 0
+    
+    # 4. 持续持有信号（这是实现“跟随”的关键）
+    # 使用 forward fill 填充 NaN，使得信号在整个趋势期间保持不变
+    factor = signal.ffill().fillna(0)
+    
+    factor.name = f'breakout_trend_factor_{window}_{n_std}'
+    return normalize_factor(factor).where(factor.abs() > 2, 0)  # 只保留绝对值大于0.1的信号
+
+
+# 使用示例 (假设你有一个名为 df 的 DataFrame)
+# df = pd.read_csv('your_crypto_data.csv', index_col='timestamp', parse_dates=True)
+# trend_factor = create_trend_following_vol_factor(df)
+# trend_factor.plot()
 # --- 示例用法 ---
 
 # 使用与之前相同的模拟数据 stock_df
@@ -670,7 +858,49 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def calculate_volatility_zscore(
+    df: pd.DataFrame, 
+    price_col: str = 'close', 
+    window: int = 24
+) -> pd.Series:
+    """
+    计算波动率Z-Score因子。
 
+    该因子通过将当前收益率与其历史滚动波动率进行比较，
+    来量化价格运动的极端程度。
+
+    因子值 > 3 或 < -3 通常表示发生了远超近期常态的极端行情。
+
+    参数:
+    df (pd.DataFrame): 包含价格数据的时间序列DataFrame，索引必须是时间类型。
+    price_col (str): DataFrame中表示价格的列名，默认为'close'。
+    window (int): 计算历史滚动波动率的回看窗口期，默认为24（例如24小时）。
+
+    返回:
+    pd.Series: 与输入DataFrame具有相同索引的因子序列。
+    """
+    if price_col not in df.columns:
+        raise ValueError(f"列 '{price_col}' 不在DataFrame中。")
+
+    # 1. 计算收益率
+    returns = df[price_col].pct_change()
+
+    # 2. 计算历史滚动波动率（标准差）
+    # 使用 .shift(1) 来确保我们用的是 t-1 到 t-N 的数据，避免前视偏差
+    historical_vol = returns.rolling(window=window).std().shift(1)
+
+    # 3. 计算因子值 (当前收益率 / 历史波动率)
+    zscore_factor = returns / historical_vol
+
+    # 4. 处理边界和异常情况
+    # - 将除以零产生的无穷大值替换为0 (表示无有效信号)
+    # - 将窗口初期产生的NaN值填充为0
+    zscore_factor = zscore_factor.replace([np.inf, -np.inf], 0).fillna(0)
+    
+    # 5. 命名Series
+    zscore_factor.name = f'vol_zscore_{window}'
+
+    return zscore_factor
 
 # class Alphas:
 #     """
@@ -823,3 +1053,5 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
 #         raw_alpha = (self.close - self.open) / ((self.high - self.low) + 0.001)
         
 #         return self._finalize_alpha(raw_alpha)
+
+

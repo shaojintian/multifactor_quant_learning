@@ -139,3 +139,5 @@ def cal_turnover_annual(pos: pd.Series, periods_per_year: int = 365) -> float:
     # 年化换手率
     annual_turnover = daily_turnover * periods_per_year
     return annual_turnover
+
+

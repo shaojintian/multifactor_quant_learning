@@ -33,7 +33,7 @@ def normalize_factor(factor: pd.Series, window: int = 2000) -> pd.Series:
         _factor = ((factor - factor.rolling(window=window).mean()) / (factor.rolling(window=window).std() + 1e-9)).clip(-3,3)
 
     #print(_factor.describe())
-    return _factor.fillna(0).round(4)
+    return _factor.fillna(0).where(lambda x: np.abs(x) >=0.1, 0).round(4)  # 将小于3的值设为0
 
 
 def normalize_factor_quantile_discrete_vectorized(

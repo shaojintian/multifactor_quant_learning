@@ -52,7 +52,9 @@ import datetime
 filtered_df = z
 filtered_df.index = pd.to_datetime(filtered_df.index, unit='ms', utc=True)
 filtered_df = preprocess_data(filtered_df)
-#z.head()
+filtered_df = filtered_df.loc[filtered_df.index > pd.Timestamp("2020-06-01").tz_localize("UTC")]
+
+# z.head()  # 注释掉以避免执行
 
 # %%
 # 2. 生成各种备选因子
@@ -81,6 +83,7 @@ final_frame = add_factor(
     filtered_df, 
     factor_logic_func= calculate_optimized_position_v2 , 
 )
+print(final_frame.columns)
 # single_factor = volatility_factor
 # single_factor = adaptive_momentum_factor
 
