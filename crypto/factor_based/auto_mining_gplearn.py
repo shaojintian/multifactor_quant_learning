@@ -160,7 +160,7 @@ est_gp = SymbolicRegressor(
     verbose=1,                    # 显示训练过程
     feature_names=feature_names,  # 特征名称，用于显示最终公式
     function_set=user_function_set, # 使用我们定义的函数集
-    metric='pearson', # 优化目标：平均绝对误差。也可以是 'spearman' 或 'pearson'
+    metric='spearman', # 优化目标：平均绝对误差。也可以是 'spearman' 或 'pearson'
     const_range=(-1., 1.),        # 公式中可以使用的常数范围
     random_state=42,              # 随机种子，保证结果可复现
     n_jobs=-1                     # 使用所有CPU核心并行计算
@@ -169,16 +169,42 @@ est_gp = SymbolicRegressor(
 est_gp.fit(X_train, y_train)
 
 
-# --- 4. 分析结果 ---
-print("\n--- 因子挖掘完成 ---")
-print("找到的最佳因子表达式:")
-print(est_gp._program)
+# --- 以下是新增的代码，用于列出最好的10个因子 ---
 
-# 查看最佳因子的其他信息
-print(f"\n最佳因子的原始适应度 (Raw Fitness): {est_gp._program.raw_fitness_}")
-print(f"\n最佳因子的OOB适应度 (Out-of-Bag Fitness): {est_gp._program.oob_fitness_}")
-print(f"最佳因子的长度 (Length): {est_gp._program.length_}")
-print(f"最佳因子的深度 (Depth): {est_gp._program.depth_}")
+print("\n" + "="*50)
+print("--- 最好的10个因子 (按适应度排序) ---")
+print("="*50)
+
+# 1. 获取最终代的整个种群
+# est_gp._programs 是一个包含所有最终个体的列表
+final_population = est_gp._programs[-1]
+
+# 2. 过滤掉适应度为无效值(None或nan)的个体，以防排序出错
+from gplearn.genetic import Program
+valid_population = [
+    p for p in final_population
+    if isinstance(p, Program) and hasattr(p, 'raw_fitness_') and p.raw_fitness_ is not None and not np.isnan(p.raw_fitness_)
+]
+
+# 3. 根据原始适应度(raw_fitness_)对种群进行排序
+#    - gplearn 的默认适应度指标（如 'mean absolute error'）是越小越好。
+#    - 如果你自定义的指标是越大越好, 请使用 reverse=True。
+sorted_population = sorted(valid_population, key=lambda p: p.raw_fitness_)
+
+# 4. 提取并打印前10个最好的因子
+top_10_programs = sorted_population[:10]
+
+if not top_10_programs:
+    print("没有找到有效的因子。")
+else:
+    for i, program in enumerate(top_10_programs):
+        print(f"\n排名 {i+1}:")
+        print(f"  因子表达式: {program}")
+        print(f"  适应度 (Fitness): {program.raw_fitness_:.6f}") # 格式化输出
+        # 你也可以打印OOB适应度，它能更好地反映泛化能力
+        if hasattr(program, 'oob_fitness_'):
+             print(f"  OOB适应度 (OOB Fitness): {program.oob_fitness_:.6f}")
+        print(f"  因子长度 (Length): {program.length_}")
 
 # 你可以获取所有代的所有程序进行更深入的分析
 # all_programs = est_gp._programs

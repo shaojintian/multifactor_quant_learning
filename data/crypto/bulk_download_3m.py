@@ -6,8 +6,8 @@ downloader = BinanceBulkDownloader()
 
 
 # download klines (frequency: "5m", asset="um")
-downloader = BinanceBulkDownloader(data_frequency="3m", 
-                                  asset="um", timeperiod_per_file="monthly",start_date="2024-11")
+downloader = BinanceBulkDownloader(data_frequency="1h", 
+                                  asset="um", timeperiod_per_file="monthly",start_date="2020-01")
 downloader.run_download()
 
 '''

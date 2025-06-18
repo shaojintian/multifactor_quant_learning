@@ -56,7 +56,7 @@ def fetch_all_klines(symbol, interval, start_time, end_time):
 symbol = 'BTCUSDT'  # 交易对
 interval = '1h'    # 时间间隔
 start_time = date_to_utc_milliseconds("2018-01-01")  # 起始时间（毫秒）
-end_time = date_to_utc_milliseconds("2024-01-01")    # 结束时间（毫秒）
+end_time = date_to_utc_milliseconds("2025-06-10")    # 结束时间（毫秒）
 
 # 获取所有K线数据
 all_klines_df = fetch_all_klines(symbol, interval, start_time, end_time)
