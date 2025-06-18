@@ -5,7 +5,7 @@ from util.norm import normalize_factor
 
 # --- 1. 定义各种因子的计算逻辑 (作为独立的函数) ---
 
-#trend
+#1.1trend
 def calculate_ma(series: pd.Series, window: int = 20) -> pd.Series:
     """计算简单移动平均线"""
     fct = normalize_factor(series["close"].rolling(window=window).mean())
@@ -68,7 +68,7 @@ def _calculate_adx(series: pd.DataFrame, window: int = 14) -> pd.Series:
     return adx.reindex(series.index)
 
 
-#trend
+#1.2trend
 def calculate_advanced_ma(
     series: pd.DataFrame,        # Changed to DataFrame to allow access to HLC for ATR/ADX
     fast_window: int = 20,       # Slower fast MA to reduce noise (was 10)
@@ -166,6 +166,7 @@ def _calculate_atr(series: pd.DataFrame, window: int = 14) -> pd.Series:
 # atr_values = _calculate_atr(data, window=14)
 # print(atr_values.tail())
 
+#1.3momentum
 def calculate_optimized_position(
     df: pd.DataFrame, 
     fast_window: int = 12, 
