@@ -32,8 +32,10 @@ def normalize_factor(factor: pd.Series, window: int = 2000) -> pd.Series:
         # Use rolling mean and std
         _factor = ((factor - factor.rolling(window=window).mean()) / (factor.rolling(window=window).std() + 1e-9)).clip(-3,3)
 
+    fct = _factor.fillna(0).where(lambda x: np.abs(x) >=0.1, 0).round(4)
+    fct = np.tanh(fct/3)*3  # 使用tanh函数将值映射到[-1, 1]区间
     #print(_factor.describe())
-    return _factor.fillna(0).where(lambda x: np.abs(x) >=0.1, 0).round(4)  # 将小于3的值设为0
+    return fct # 将小于3的值设为0
 
 
 def normalize_factor_quantile_discrete_vectorized(

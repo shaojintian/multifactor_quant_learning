@@ -18,12 +18,12 @@ def cal_net_values(pos: pd.Series, ret: pd.Series) -> pd.Series:
     position_changes = pos.diff().fillna(0)
 
     # 小于手续费的不执行交易，手续费为 0 仓位变化大于50%
-    should_trade = np.abs(position_changes) > (1000 * fee)  # boolean mask 0.5
+    should_trade = np.abs(position_changes) > 0.5  # boolean mask 0.5
     # 实际持仓：不交易时，仓位用前一时刻仓位；交易时用当前仓位
     effective_pos = pos.copy()
     effective_pos = effective_pos.where(should_trade, other=pos.shift(1))
 
-    print("--effective_pos--", effective_pos.describe())
+    #print("--effective_pos--", effective_pos.describe())
 
     # 手续费，只有交易时收
     effective_fee = np.where(should_trade, np.abs(position_changes) * fee, 0)
@@ -34,6 +34,8 @@ def cal_net_values(pos: pd.Series, ret: pd.Series) -> pd.Series:
     #fill 1
     net_values = net_values.dropna()
     return net_values  # 返回净值序列
+
+    
 
 
 
@@ -88,14 +90,20 @@ def cal_net_values_compounded(pos: pd.Series, ret: pd.Series, fee: float = 0.000
     prev_pos = pos.shift(1).fillna(0)
     position_changes = pos - prev_pos
 
+    should_trade = np.abs(position_changes) > 0.5  # boolean mask 0.5
+    
+    effective_pos = pos.copy()
+    effective_pos = effective_pos.where(should_trade, other=pos.shift(1))
+    effective_fee = np.where(should_trade, np.abs(position_changes) * fee, 0)
+
     # 2. 计算每个周期的净值乘数
     # 乘数 = (1 - 交易成本率) * (1 + 持仓收益率)
     
     # 交易成本会立即减少我们的本金
-    fee_multiplier = 1 - np.abs(position_changes) * fee
+    fee_multiplier = 1 - effective_fee
     
     # 持仓收益作用于交易后剩下的本金上
-    pnl_multiplier = 1 + pos * ret
+    pnl_multiplier = 1 + effective_pos * ret
     
     # 单周期的总回报乘数
     daily_multiplier = fee_multiplier * pnl_multiplier

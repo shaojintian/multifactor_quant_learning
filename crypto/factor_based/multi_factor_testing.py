@@ -28,7 +28,7 @@ import pandas as pd
 # import polars as pl
 import matplotlib.pyplot as plt
 from util.norm import normalize_factor
-from util.sharpe_calculatio import cal_sharp_random,calculate_sharpe_ratio_corrected
+from util.sharpe_calculatio import *
 from calculate_net_vaules import cal_net_values, cal_net_values_before_rebate,cal_net_values_compounded
 from combine_factor import *
 # from verify_risk_orthogonalization import risk_orthogonalization # 不再需要风险正交
@@ -50,7 +50,7 @@ import datetime
 filtered_df = z
 filtered_df.index = pd.to_datetime(filtered_df.index, unit='ms', utc=True)
 filtered_df = preprocess_data(filtered_df)
-#filtered_df = filtered_df.loc[filtered_df.index > pd.Timestamp("2020-06-01").tz_localize("UTC")]
+
 #z.head()
 
 # %%
@@ -67,9 +67,10 @@ filtered_df = preprocess_data(filtered_df)
 
 # %%
 # 3. 计算行情收益率
+
 ret = filtered_df['close'].pct_change().shift(-1).fillna(0)
-print("--- 收益率统计 ---")
-print(ret.describe())
+#print("--- 收益率统计 ---")
+#print(ret.describe())
 
 # %%
 #### 4. 选择并处理单因子
@@ -87,24 +88,40 @@ final_frame = add_factor(
 )
 final_frame = add_factor(
     final_frame, 
-    factor_logic_func=calculate_complex_factor_corrected , 
+    factor_logic_func=fct003 , 
 )
 final_frame = add_factor(
     final_frame,    
-    factor_logic_func=calculate_advanced_ma ,
+    factor_logic_func=fct002 ,
 )
 final_frame = add_factor(
     final_frame,
     factor_logic_func=calculate_ma,
 )
+# final_frame = add_factor(
+#     final_frame,
+#     factor_logic_func=calculate_momentum,
+# )
+final_frame = add_factor(
+    final_frame, 
+    factor_logic_func=fct001 #Share 1.3
+)
+
+# final_frame = add_factor(
+#     final_frame, 
+#     factor_logic_func=fct002
+# )
 # single_factor = volatility_factor
 # single_factor = adaptive_momentum_factor
 
-print("\n--- 多因子组合 ---")
-final_factor = combine_factors_lightgbm(final_frame, factor_cols=final_frame.columns[-5:],weights=[0.25,0.25,0.25,0.25]) 
+print("\n--- 多因子组合 ---",final_frame.columns[-6:])
+final_factor = combine_factors_lightgbm(final_frame, factor_cols=["calculate_optimized_position_v2","fct001","calculate_ma"],weights=[0.8,0.2])
+# final_factor = combine_factors_linear(final_frame, factor_cols=final_frame.columns[-6:],weights=[0.2,0.2,0.2,0.2,0.2,0.2]) 
 #final_factor = alphas.alpha004()  # 选择 Alpha#101 作为单因子
 print("\n--- 原始多因子统计 ---")
 print(final_factor.describe())
+
+#final_factor.to_csv('factor_test_data/crypto/final_factor.csv')
 
 
 
@@ -134,17 +151,19 @@ plt.show()
 
 
 # %%
-# 8. 计算策略净值（考虑手续费）
-net_values = cal_net_values(final_factor,ret)
+# 8. 计算策略净值（考虑手续费）¥¥¥¥¥¥¥4
+net_values = cal_net_values_compounded(final_factor,ret)
+#print(net_values.values)  # numpy array
 # 9. 计算策略净值（不考虑手续费）
 net_values_before_rebate = cal_net_values_before_rebate(final_factor,ret)
 plt.figure(figsize=(12, 6))
 
 
-normalized_close = filtered_df["close"] / filtered_df["close"].iloc[0]
+normalized_close = filtered_df["close"] / filtered_df["close"].iloc[0]  # 归一化收盘价
 plt.plot(filtered_df.index, normalized_close, label="normalized_close")
 # 画净值曲线（考虑手续费）
-plt.plot(net_values.index, net_values.values, label="Net Value (with fee) single interest", linewidth=2)
+plt.plot(net_values.index, net_values.values, label="Net Value (with fee) compounded", linewidth=2)
+#print(net_values)
 
 # 画净值曲线（不考虑手续费）
 plt.plot(net_values_before_rebate.index, net_values_before_rebate.values, label="Net Value (before fee) single interest", linewidth=2, linestyle="--")
@@ -158,6 +177,9 @@ plt.grid(True)
 plt.tight_layout()
 # plt.show()
 
+# fct001_ortho                             0.516833
+# calculate_ma_ortho                       0.359000
+# calculate_optimized_position_v2_ortho    0.124167
 
 
 # %%
@@ -184,10 +206,15 @@ from util.max_drawdown import calculate_max_drawdown
 max_drawdown = calculate_max_drawdown(cleaned_net_values)
 print(f"最大回撤 (Max Drawdown): {max_drawdown:.2%}")
 
+calmar_ratio = calculate_calmar_ratio(net_values)
+print(f"Calmar Ratio: {calmar_ratio:.2f}")
+
 plt.figtext(0.5, 0.95, f"Annualized Sharpe Ratio: {sharp:.4f}", ha="center", fontsize=12, color="blue")
 
 # 图下方显示最大回撤
 plt.figtext(0.5, 0.01, f"Max Drawdown: {max_drawdown:.2%}", ha="center", fontsize=12, color="red")
+
+plt.figtext(0.5, 0.98, f"Calmar Ratio: {calmar_ratio:.4f}", ha="center", fontsize=12, color="green")
 
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # 预留上下空间避免覆盖
 plt.show()

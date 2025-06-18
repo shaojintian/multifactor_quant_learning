@@ -42,6 +42,7 @@ from calculate_net_vaules import *
 # from verify_risk_orthogonalization import risk_orthogonalization # 不再需要风险正交
 pd.plotting.register_matplotlib_converters()
 from factor_generator import *
+from combine_factor import _compute_rolling_combined_score
 
 
 # %%
@@ -58,7 +59,7 @@ import datetime
 filtered_df = z
 filtered_df.index = pd.to_datetime(filtered_df.index, unit='ms', utc=True)
 filtered_df = preprocess_data(filtered_df)
-filtered_df = filtered_df.loc[filtered_df.index > pd.Timestamp("2020-06-01").tz_localize("UTC")]
+#filtered_df = filtered_df.loc[filtered_df.index < pd.Timestamp("2025-01-01").tz_localize("UTC")]
 
 # --- 0. 数据模拟 ---
 # 在实际应用中，请替换成你自己的数据加载方式，例如 pd.read_csv('your_data.csv')
@@ -66,7 +67,7 @@ filtered_df = filtered_df.loc[filtered_df.index > pd.Timestamp("2020-06-01").tz_
 columns = ['open', 'high', 'low', 'close', 'volume', 'close time',
            'quote asset volume', 'number of trades', 'taker buy base asset volume',
            'taker buy quote asset volume', 'ignore', 'log_return', 'volatility',
-           'avg_volume']
+           'avg_volume_7',"returns","returns_7_std"]
 
 # 创建1000条模拟的时间序列数据
 
@@ -80,7 +81,8 @@ print(df.head())
 # ** 这是最关键的一步 **
 # 我们的目标(y)是预测 *未来* 的收益率。这里我们用下一期的对数收益率作为目标。
 # shift(-1) 表示将未来的值移动到当前行
-df['target'] = df['log_return'].shift(-1)
+#df['target'] = df['log_return'].shift(-1)
+df['target'] = _compute_rolling_combined_score(df["returns"].shift(-1), window=100)  # 使用未来收益率计算滚动评分
 
 # 删除最后一行，因为它的 'target' 是 NaN
 df.dropna(inplace=True)
@@ -89,7 +91,8 @@ df.dropna(inplace=True)
 # 我们排除掉未来信息('log_return', 'target')和非数值或不相关的列('close time', 'ignore')
 feature_names = ['open', 'high', 'low', 'close', 'volume',
                  'quote asset volume', 'number of trades', 'taker buy base asset volume',
-                 'taker buy quote asset volume', 'volatility', 'avg_volume']
+                 'taker buy quote asset volume', 'volatility', 'log_return', 'volatility',
+           'avg_volume_7', 'avg_volume_20',"returns","returns_7_std","returns_20_std"]
 
 X = df[feature_names].values
 y = df['target'].values
@@ -116,6 +119,11 @@ def _ts_rank(x):
     s = pd.Series(x)
     return s.rolling(window).apply(lambda w: w.rank(pct=True).iloc[-1], raw=False).fillna(0).values
 
+def _ts_std(x):
+    window=7
+    s = pd.Series(x)
+    return s.rolling(window).std().fillna(0).values
+
 # 这个函数需要1个参数 (x)
 def _ts_delay(x):
     period  = 1
@@ -137,12 +145,12 @@ ts_corr = make_function(function=_ts_corr, name='ts_corr', arity=2)
 # arity=1 用于需要一个输入的函数
 ts_rank = make_function(function=_ts_rank, name='ts_rank', arity=1)
 ts_delay = make_function(function=_ts_delay, name='ts_delay', arity=1)
-
+ts_std = make_function(function=_ts_std, name='ts_std', arity=1)
 
 # 创建函数集
 user_function_set = [
     protected_division, 'add', 'sub', 'mul', 'neg', 'log', 'sqrt', 'abs',
-    ts_rank, ts_delay, ts_corr
+    ts_rank, ts_delay, ts_corr,ts_std
 ]
 
 
@@ -150,7 +158,7 @@ user_function_set = [
 print("\n开始进行遗传编程因子挖掘...")
 est_gp = SymbolicRegressor(
     population_size=1000,         # 种群大小：每一代有多少个备选因子
-    generations=20,               # 进化代数
+    generations=8,               # 进化代数
     stopping_criteria=0.95,       # 停止标准：当适应度（metric）达到这个值时提前停止
     p_crossover=0.7,              # 交叉概率
     p_subtree_mutation=0.1,       # 子树变异概率
@@ -190,7 +198,7 @@ valid_population = [
 sorted_population = sorted(valid_population, key=lambda p: p.raw_fitness_)
 
 # 4. 提取并打印前10个最好的因子
-top_10_programs = sorted_population[:10]
+top_10_programs = sorted_population[:5]
 
 if not top_10_programs:
     print("没有找到有效的因子。")

@@ -29,7 +29,7 @@ import pandas as pd
 # import polars as pl
 import matplotlib.pyplot as plt
 from util.norm import normalize_factor
-from util.sharpe_calculatio import cal_sharp_random,calculate_sharpe_ratio_corrected
+from util.sharpe_calculatio import cal_sharp_random,calculate_sharpe_ratio_corrected,calculate_calmar_ratio
 from util import calculate_max_drawdown
 from calculate_net_vaules import cal_net_values, cal_net_values_before_rebate,cal_net_values_compounded
 from calculate_net_vaules import *
@@ -52,7 +52,7 @@ import datetime
 filtered_df = z
 filtered_df.index = pd.to_datetime(filtered_df.index, unit='ms', utc=True)
 filtered_df = preprocess_data(filtered_df)
-filtered_df = filtered_df.loc[filtered_df.index > pd.Timestamp("2020-06-01").tz_localize("UTC")]
+#filtered_df = filtered_df.loc[filtered_df.index > pd.Timestamp("2024-06-01").tz_localize("UTC")]
 
 # z.head()  # 注释掉以避免执行
 
@@ -81,7 +81,8 @@ print(ret.describe())
 #alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
     filtered_df, 
-    factor_logic_func= calculate_advanced_ma , 
+    factor_logic_func= fct001
+
 )
 print(final_frame.columns)
 # single_factor = volatility_factor
@@ -91,6 +92,8 @@ final_factor = final_frame[final_frame.name]
 #final_factor = alphas.alpha004()  # 选择 Alpha#101 作为单因子
 print("\n--- 原始单因子统计 ---")
 print(final_factor.describe())
+
+final_factor.to_csv('factor_test_data/crypto/fct001_factor.csv')
 
 
 
@@ -172,9 +175,11 @@ turnover = cal_turnover_annual(final_factor)
 
 print(f"年化换手率 (Annualized Turnover): {turnover:.2%}")
 
+calmar = calculate_calmar_ratio(net_values)
 
 # 图上方显示夏普率
 plt.figtext(0.5, 0.95, f"Annualized Sharpe Ratio: {sharp:.4f}", ha="center", fontsize=12, color="blue")
+plt.figtext(0.5, 0.92, f"Calmar Ratio: {calmar:.2f}", ha="center", fontsize=12, color="green")
 
 # 图下方显示最大回撤
 plt.figtext(0.5, 0.01, f"Max Drawdown: {max_drawdown:.2%}", ha="center", fontsize=12, color="red")

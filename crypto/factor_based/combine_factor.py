@@ -66,6 +66,7 @@ def combine_factors_linear(df: pd.DataFrame, factor_cols: list, weights: list) -
     :param weights: 与因子一一对应的权重列表
     :return: 组合因子（Series）
     """
+    assert len(factor_cols) == len(weights), f"因子列数与权重长度不匹配{len(factor_cols)} != {len(weights)}"
     X = df[factor_cols].values  # 风险正交化
     #print(X.columns)
     #X = df[factor_cols].values
@@ -84,11 +85,71 @@ def _compute_rolling_sharpe(series: pd.Series, window: int = 60) -> pd.Series:
     return sharpe
 
 
+def _compute_rolling_calmar(return_series: pd.Series, window: int = 100) -> pd.Series:
+    """
+    计算滚动 Calmar 比率：年化收益率 / 最大回撤（负值）
+    return_series 应为未来收益（例如 shift(-1)）
+    """
+    rolling_calmar = []
+
+    for i in range(len(return_series)):
+        if i < window:
+            rolling_calmar.append(np.nan)
+            continue
+
+        window_ret = return_series.iloc[i - window:i]
+        cum_ret = (1 + window_ret).cumprod()
+        max_dd = ((cum_ret / cum_ret.cummax()) - 1).min()  # 最大回撤（负数）
+        annual_ret = window_ret.mean() * 365 * 24  # 假设日频，可以改为每小时 *24*365
+
+        if max_dd < 0:
+            calmar = annual_ret / abs(max_dd)
+        else:
+            calmar = 0
+
+        rolling_calmar.append(calmar)
+
+    return pd.Series(rolling_calmar, index=return_series.index)
+
+
+def _compute_rolling_combined_score(return_series: pd.Series, window: int = 100) -> pd.Series:
+    """
+    计算滚动评分：Calmar（年化收益 / 最大回撤） + 0.5 * Sharpe
+    return_series 应为未来收益（例如 shift(-1)）
+    """
+    scores = []
+
+    for i in range(len(return_series)):
+        if i < window:
+            scores.append(np.nan)
+            continue
+
+        window_ret = return_series.iloc[i - window:i]
+        cum_ret = (1 + window_ret).cumprod()
+        max_dd = ((cum_ret / cum_ret.cummax()) - 1).min()  # 最大回撤（负数）
+        annual_ret = window_ret.mean() * 365 * 24  # 小时级别数据
+
+        sharpe = 0
+        if window_ret.std() > 0:
+            sharpe = (window_ret.mean() / window_ret.std()) * np.sqrt(365 * 24)
+
+        if max_dd < 0:
+            calmar = annual_ret / abs(max_dd)
+        else:
+            calmar = 0
+
+        # 组合目标函数
+        score = calmar + 0.5 * sharpe
+        scores.append(score)
+
+    return pd.Series(scores, index=return_series.index)
+
+
 def combine_factors_lightgbm(df: pd.DataFrame, 
                              factor_cols: list, 
-                             return_col: str = "log_return", 
+                             return_col: str = "returns", 
                              lgbm_params: dict = None,
-                             sharpe_window: int = 60*24,
+                             sharpe_window: int = 60*24,  # 默认60天
                              **kwargs) -> pd.Series:
     """
     使用 LightGBM 学习一个非线性组合因子，以最大化未来的滑动年化 Sharpe。
@@ -103,11 +164,11 @@ def combine_factors_lightgbm(df: pd.DataFrame,
     df = df.copy()
 
     # 计算未来收益的年化 Sharpe Ratio 作为标签 y
-    df['future_sharpe'] = _compute_rolling_sharpe(df[return_col].shift(-1), window=sharpe_window).fillna(0)
-
+    #df['future_sharpe'] = _compute_rolling_sharpe(df[return_col].shift(-1), window=sharpe_window).fillna(0)
+    df['future_calmar'] = _compute_rolling_combined_score(df[return_col].shift(-1),window=sharpe_window).fillna(0)
     X = df[factor_cols]
     X = risk_orthogonalization(X)  # 风险正交化处理
-    y = df['future_sharpe']
+    y = df['future_calmar']
 
     # LightGBM 参数
     if lgbm_params is None:
@@ -131,7 +192,9 @@ def combine_factors_lightgbm(df: pd.DataFrame,
     print("训练目标：拟合未来 Sharpe 最大的因子组合。")
     model = lgb.LGBMRegressor(**lgbm_params)
 
-    model.fit(X, y)
+    X_train = X[:len(X)*4//5]  # 前 80% 数据作为训练集
+    y_train = y[:len(y)*4//5]  # 前 80% 数据作为训练集
+    model.fit(X_train, y_train)
 
     # 提取特征重要性作为线性权重组合
     importance = model.feature_importances_
@@ -141,5 +204,8 @@ def combine_factors_lightgbm(df: pd.DataFrame,
     combined_factor = pd.Series(combined_factor, index=df.index, name="combined_factor lightgmb")
 
     feature_importances = pd.Series(weights, index=X.columns, name="Feature Importance")
-    print("\n模型学习到的特征重要性:\n",feature_importances)
+    print("\n模型学习到的特征重要性:\n",feature_importances.sort_values(ascending=False))
+
+    combined_factor = normalize_factor(combined_factor)# 确保因子非负
+    
     return combined_factor

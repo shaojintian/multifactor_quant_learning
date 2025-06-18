@@ -1,0 +1,40 @@
+/Users/wanting/Downloads/multifactor_quant_learning/crypto/factor_based/factor_generator.py:1049: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df.dropna(inplace=True)
+/Users/wanting/Downloads/multifactor_quant_learning/crypto/factor_based/factor_generator.py:1049: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df.dropna(inplace=True)
+模拟数据前5行:
+                               open      high  ...  returns_20_std    trades_std
+open time                                      ...                              
+2020-11-01 01:00:00+00:00  13725.96  13772.02  ...        0.005794  28839.877779
+2020-11-01 02:00:00+00:00  13759.91  13774.96  ...        0.005438  29331.108001
+2020-11-01 03:00:00+00:00  13715.88  13733.90  ...        0.005418  29468.411291
+2020-11-01 04:00:00+00:00  13690.01  13701.05  ...        0.004678  27482.701850
+2020-11-01 05:00:00+00:00  13677.24  13755.00  ...        0.003872  26779.744718
+
+[5 rows x 20 columns]
+
+开始进行遗传编程因子挖掘...
+    |   Population Average    |             Best Individual              |
+---- ------------------------- ------------------------------------------ ----------
+ Gen   Length          Fitness   Length          Fitness      OOB Fitness  Time Left
+模拟数据前5行:
+                               open      high  ...  returns_20_std    trades_std
+open time                                      ...                              
+2020-11-01 01:00:00+00:00  13725.96  13772.02  ...        0.005794  28839.877779
+2020-11-01 02:00:00+00:00  13759.91  13774.96  ...        0.005438  29331.108001
+2020-11-01 03:00:00+00:00  13715.88  13733.90  ...        0.005418  29468.411291
+2020-11-01 04:00:00+00:00  13690.01  13701.05  ...        0.004678  27482.701850
+2020-11-01 05:00:00+00:00  13677.24  13755.00  ...        0.003872  26779.744718
+
+[5 rows x 20 columns]
+
+开始进行遗传编程因子挖掘...
+    |   Population Average    |             Best Individual              |
+---- ------------------------- ------------------------------------------ ----------
+ Gen   Length          Fitness   Length          Fitness      OOB Fitness  Time Left

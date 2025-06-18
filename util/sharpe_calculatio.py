@@ -126,3 +126,32 @@ def calculate_sharpe_ratio_corrected(
     annualized_sharpe_ratio = sharpe_ratio_periodic * annual_factor
     
     return annualized_sharpe_ratio
+
+def calculate_calmar_ratio(net_value: pd.Series, periods_per_year: int = 365*24) -> float:
+    """
+    计算 Calmar Ratio（年化收益 / 最大回撤）
+
+    参数:
+        net_value (pd.Series): 净值序列，index 应为时间顺序。
+        periods_per_year (int): 年度交易周期数，默认 365（适用于加密货币小时线）
+
+    返回:
+        float: Calmar 比率
+    """
+    # 计算收益率
+    returns = net_value.pct_change().dropna()
+
+    # 年化收益率（单利或复利都可以，此处用复利）
+    total_return = net_value.iloc[-1] / net_value.iloc[0] - 1
+    years = len(net_value) / periods_per_year
+    annual_return = (1 + total_return) ** (1 / years) - 1
+
+    # 最大回撤
+    peak = net_value.cummax()
+    drawdown = (net_value - peak) / peak
+    max_drawdown = drawdown.min()  # 是负值
+
+    # Calmar Ratio
+    if max_drawdown == 0:
+        return np.nan  # 避免除以0
+    return annual_return / abs(max_drawdown)
