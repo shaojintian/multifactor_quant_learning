@@ -32,6 +32,7 @@ from util.norm import normalize_factor
 from util.sharpe_calculatio import cal_sharp_random,calculate_sharpe_ratio_corrected
 from util import calculate_max_drawdown
 from calculate_net_vaules import cal_net_values, cal_net_values_before_rebate,cal_net_values_compounded
+from calculate_net_vaules import *
 # from verify_risk_orthogonalization import risk_orthogonalization # 不再需要风险正交
 pd.plotting.register_matplotlib_converters()
 from factor_generator import *
@@ -136,7 +137,7 @@ plt.ylabel("Net Value")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.show()
+
 
 
 
@@ -160,7 +161,20 @@ print(f"\n--- 策略表现评估 ({final_factor.name}) ---")
 print(f"年化夏普比率 (Annualized Sharpe Ratio): {sharp:.4f}")
 
 max_drawdown = calculate_max_drawdown(cleaned_net_values)
+
+
 print(f"最大回撤 (Max Drawdown): {max_drawdown:.2%}")
 
-turnover = final_factor.diff().abs().sum() / final_factor.abs().sum()
+turnover = cal_turnover_annual(final_factor)
+
 print(f"年化换手率 (Annualized Turnover): {turnover:.2%}")
+
+
+# 图上方显示夏普率
+plt.figtext(0.5, 0.95, f"Annualized Sharpe Ratio: {sharp:.4f}", ha="center", fontsize=12, color="blue")
+
+# 图下方显示最大回撤
+plt.figtext(0.5, 0.01, f"Max Drawdown: {max_drawdown:.2%}", ha="center", fontsize=12, color="red")
+
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # 预留上下空间避免覆盖
+plt.show()

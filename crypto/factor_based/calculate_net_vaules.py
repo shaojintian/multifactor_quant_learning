@@ -18,12 +18,12 @@ def cal_net_values(pos: pd.Series, ret: pd.Series) -> pd.Series:
     position_changes = pos.diff().fillna(0)
 
     # 小于手续费的不执行交易，手续费为 0 仓位变化大于50%
-    should_trade = np.abs(position_changes) > 1000 * fee  # boolean mask 0.5
+    should_trade = np.abs(position_changes) > (1000 * fee)  # boolean mask 0.5
     # 实际持仓：不交易时，仓位用前一时刻仓位；交易时用当前仓位
     effective_pos = pos.copy()
-    effective_pos[~should_trade] = pos.shift(1)[~should_trade]
+    effective_pos = effective_pos.where(should_trade, other=pos.shift(1))
 
-    print("--effective_pos--", effective_pos.describe)
+    print("--effective_pos--", effective_pos.describe())
 
     # 手续费，只有交易时收
     effective_fee = np.where(should_trade, np.abs(position_changes) * fee, 0)
@@ -50,7 +50,7 @@ def cal_net_values_before_rebate(pos: pd.Series, ret: pd.Series) -> pd.Series:
     should_trade = np.abs(position_changes) > 1000 * fee  # boolean mask 0.5
     
     effective_pos = pos.copy()
-    effective_pos[~should_trade] = pos.shift(1)[~should_trade]
+    effective_pos = effective_pos.where(should_trade, other=pos.shift(1))
     # 计算净值
     net_values = 1 + (effective_pos * ret ).cumsum()
 
@@ -110,3 +110,32 @@ def cal_net_values_compounded(pos: pd.Series, ret: pd.Series, fee: float = 0.000
     net_values = net_values.fillna(initial_value)
 
     return net_values
+
+
+def cal_turnover_annual(pos: pd.Series, periods_per_year: int = 365) -> float:
+    """
+    计算年化换手率（仓位变动率总和年化）。
+
+    Args:
+        pos (pd.Series): 仓位序列，索引应为时间序列。
+        periods_per_year (int): 每年周期数，默认252个交易日。
+
+    Returns:
+        float: 年化换手率（总仓位变动绝对值年化）
+    """
+    fee = 0.0005  # 仓位每次变动的滑损(maker 0.02%， taker 0.05%)
+    # 使用 np.hstack 组合当前仓位和仓位变化
+    raw_position_changes = pos.diff().fillna(0)
+
+    # 小于手续费的不执行交易，手续费为 0 仓位变化大于50%
+    should_trade = np.abs(raw_position_changes) > 10000000000 * fee  # boolean mask 0.5
+    # 实际持仓：不交易时，仓位用前一时刻仓位；交易时用当前仓位
+    effective_pos = pos.copy()
+    effective_pos = effective_pos.where(should_trade, other=pos.shift(1))
+
+    position_changes = effective_pos.diff().fillna(effective_pos.iloc[0]).abs()
+    # 日均换手率
+    daily_turnover = position_changes.sum() / len(pos)
+    # 年化换手率
+    annual_turnover = daily_turnover * periods_per_year
+    return annual_turnover
