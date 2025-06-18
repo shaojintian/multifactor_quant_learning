@@ -631,154 +631,154 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
 
 
 
-class Alphas:
-    """
-    实现 WorldQuant 101 Alphas，并提供可选的因子标准化功能。
+# class Alphas:
+#     """
+#     实现 WorldQuant 101 Alphas，并提供可选的因子标准化功能。
 
-    本类接收一个标准的 OHLCV 金融时间序列数据作为输入，并提供
-    方法来计算 101 个 Alpha 因子。
+#     本类接收一个标准的 OHLCV 金融时间序列数据作为输入，并提供
+#     方法来计算 101 个 Alpha 因子。
 
-    参数:
-    df (pd.DataFrame): 
-        输入的 DataFrame，必须包含以下列:
-        'open', 'high', 'low', 'close', 'volume'
-        索引必须是时间序列索引 (例如 pd.DatetimeIndex)。
+#     参数:
+#     df (pd.DataFrame): 
+#         输入的 DataFrame，必须包含以下列:
+#         'open', 'high', 'low', 'close', 'volume'
+#         索引必须是时间序列索引 (例如 pd.DatetimeIndex)。
     
-    normalize_alphas (bool, optional): 
-        如果为 True，所有生成的因子将进行时间序列标准化（滚动Z-score）。
-        默认为 False。
+#     normalize_alphas (bool, optional): 
+#         如果为 True，所有生成的因子将进行时间序列标准化（滚动Z-score）。
+#         默认为 False。
         
-    norm_window (int, optional):
-        进行时间序列标准化时使用的滚动窗口大小。
-        默认为 126 (约半年)。
+#     norm_window (int, optional):
+#         进行时间序列标准化时使用的滚动窗口大小。
+#         默认为 126 (约半年)。
 
-    使用方法:
-    >>> df = create_dummy_data()
-    >>> # 不进行标准化
-    >>> alpha_gen_raw = Alphas(df, normalize_alphas=False)
-    >>> raw_alpha1 = alpha_gen_raw.alpha001()
-    >>> # 进行标准化
-    >>> alpha_gen_norm = Alphas(df, normalize_alphas=True)
-    >>> normalized_alpha1 = alpha_gen_norm.alpha001()
-    """
-    def __init__(self, df: pd.DataFrame, normalize_alphas: bool = True, norm_window: int = 126):
-        # 1. 数据校验和预处理
-        required_cols = ['open', 'high', 'low', 'close', 'volume']
-        for col in required_cols:
-            if col not in df.columns:
-                raise ValueError(f"输入的 DataFrame 缺少必需列: '{col}'")
+#     使用方法:
+#     >>> df = create_dummy_data()
+#     >>> # 不进行标准化
+#     >>> alpha_gen_raw = Alphas(df, normalize_alphas=False)
+#     >>> raw_alpha1 = alpha_gen_raw.alpha001()
+#     >>> # 进行标准化
+#     >>> alpha_gen_norm = Alphas(df, normalize_alphas=True)
+#     >>> normalized_alpha1 = alpha_gen_norm.alpha001()
+#     """
+#     def __init__(self, df: pd.DataFrame, normalize_alphas: bool = True, norm_window: int = 126):
+#         # 1. 数据校验和预处理
+#         required_cols = ['open', 'high', 'low', 'close', 'volume']
+#         for col in required_cols:
+#             if col not in df.columns:
+#                 raise ValueError(f"输入的 DataFrame 缺少必需列: '{col}'")
         
-        self.df = df.copy()
+#         self.df = df.copy()
         
-        # 2. 方便地访问数据列
-        self.open = self.df['open']
-        self.high = self.df['high']
-        self.low = self.df['low']
-        self.close = self.df['close']
-        self.volume = self.df['volume']
+#         # 2. 方便地访问数据列
+#         self.open = self.df['open']
+#         self.high = self.df['high']
+#         self.low = self.df['low']
+#         self.close = self.df['close']
+#         self.volume = self.df['volume']
         
-        # 3. 预计算常用数据
-        self.returns = self.close.pct_change()
-        self.vwap = (self.close * self.volume).cumsum() / self.volume.cumsum()
+#         # 3. 预计算常用数据
+#         self.returns = self.close.pct_change()
+#         self.vwap = (self.close * self.volume).cumsum() / self.volume.cumsum()
         
-        # 4. 标准化设置
-        self.normalize_alphas = normalize_alphas
-        self.norm_window = norm_window
+#         # 4. 标准化设置
+#         self.normalize_alphas = normalize_alphas
+#         self.norm_window = norm_window
 
-    # ---------------------------------------------------------------- #
-    # 辅助函数 (Helper Functions)
-    # ---------------------------------------------------------------- #
+#     # ---------------------------------------------------------------- #
+#     # 辅助函数 (Helper Functions)
+#     # ---------------------------------------------------------------- #
 
-    def _normalize_factor(self, series: pd.Series) -> pd.Series:
-        """
-        对因子进行时间序列标准化 (滚动Z-score)。
-        """
-        # 使用 expanding() 来处理窗口初期的数据不足问题
+#     def _normalize_factor(self, series: pd.Series) -> pd.Series:
+#         """
+#         对因子进行时间序列标准化 (滚动Z-score)。
+#         """
+#         # 使用 expanding() 来处理窗口初期的数据不足问题
     
-        return normalize_factor(series, window=self.norm_window)
+#         return normalize_factor(series, window=self.norm_window)
 
-    def _finalize_alpha(self, raw_alpha: pd.Series) -> pd.Series:
-        """
-        在返回最终 Alpha 前，根据设置决定是否进行标准化。
-        """
-        if self.normalize_alphas:
-            return self._normalize_factor(raw_alpha)
-        return raw_alpha
+#     def _finalize_alpha(self, raw_alpha: pd.Series) -> pd.Series:
+#         """
+#         在返回最终 Alpha 前，根据设置决定是否进行标准化。
+#         """
+#         if self.normalize_alphas:
+#             return self._normalize_factor(raw_alpha)
+#         return raw_alpha
 
-    # ... 其他辅助函数 _delay, _rank, _correlation 等保持不变 ...
-    def _delay(self, series: pd.Series, period: int) -> pd.Series:
-        return series.shift(period)
-    def _delta(self, series: pd.Series, period: int) -> pd.Series:
-        return series.diff(period)
-    def _rank(self, series: pd.Series) -> pd.Series:
-        return series.rank(pct=True)
-    def _correlation(self, series1: pd.Series, series2: pd.Series, window: int) -> pd.Series:
-        return series1.rolling(window).corr(series2)
-    def _stddev(self, series: pd.Series, window: int) -> pd.Series:
-        return series.rolling(window).std()
-    def _ts_max(self, series: pd.Series, window: int) -> pd.Series:
-        return series.rolling(window).max()
-    def _ts_argmax(self, series: pd.Series, window: int) -> pd.Series:
-        return series.rolling(window).apply(np.argmax, raw=True)
-    def _signed_power(self, series: pd.Series, power: float) -> pd.Series:
-        return np.sign(series) * (np.abs(series) ** power)
-    def ts_rank(self, series: pd.Series, window: int) -> pd.Series:
-        def rank_last(window_data):
-            return pd.Series(window_data).rank(pct=True).iloc[-1]
-        return series.rolling(window).apply(rank_last, raw=False)
+#     # ... 其他辅助函数 _delay, _rank, _correlation 等保持不变 ...
+#     def _delay(self, series: pd.Series, period: int) -> pd.Series:
+#         return series.shift(period)
+#     def _delta(self, series: pd.Series, period: int) -> pd.Series:
+#         return series.diff(period)
+#     def _rank(self, series: pd.Series) -> pd.Series:
+#         return series.rank(pct=True)
+#     def _correlation(self, series1: pd.Series, series2: pd.Series, window: int) -> pd.Series:
+#         return series1.rolling(window).corr(series2)
+#     def _stddev(self, series: pd.Series, window: int) -> pd.Series:
+#         return series.rolling(window).std()
+#     def _ts_max(self, series: pd.Series, window: int) -> pd.Series:
+#         return series.rolling(window).max()
+#     def _ts_argmax(self, series: pd.Series, window: int) -> pd.Series:
+#         return series.rolling(window).apply(np.argmax, raw=True)
+#     def _signed_power(self, series: pd.Series, power: float) -> pd.Series:
+#         return np.sign(series) * (np.abs(series) ** power)
+#     def ts_rank(self, series: pd.Series, window: int) -> pd.Series:
+#         def rank_last(window_data):
+#             return pd.Series(window_data).rank(pct=True).iloc[-1]
+#         return series.rolling(window).apply(rank_last, raw=False)
 
 
-    # ---------------------------------------------------------------- #
-    # Alpha 因子实现 (示例)
-    # ---------------------------------------------------------------- #
+#     # ---------------------------------------------------------------- #
+#     # Alpha 因子实现 (示例)
+#     # ---------------------------------------------------------------- #
 
-    def alpha001(self) -> pd.Series:
-        """
-        Alpha#1: (rank(Ts_ArgMax(SignedPower(((returns < 0) ? stddev(returns, 20) : close), 2.), 5)) - 0.5)
-        """
-        inner = np.where(self.returns < 0, self._stddev(self.returns, 20), self.close)
-        signed_power = self._signed_power(pd.Series(inner, index=self.df.index), 2.)
-        ts_argmax = self._ts_argmax(signed_power, 5)
-        raw_alpha = self._rank(ts_argmax) - 0.5
+#     def alpha001(self) -> pd.Series:
+#         """
+#         Alpha#1: (rank(Ts_ArgMax(SignedPower(((returns < 0) ? stddev(returns, 20) : close), 2.), 5)) - 0.5)
+#         """
+#         inner = np.where(self.returns < 0, self._stddev(self.returns, 20), self.close)
+#         signed_power = self._signed_power(pd.Series(inner, index=self.df.index), 2.)
+#         ts_argmax = self._ts_argmax(signed_power, 5)
+#         raw_alpha = self._rank(ts_argmax) - 0.5
         
-        return self._finalize_alpha(raw_alpha)
+#         return self._finalize_alpha(raw_alpha)
 
-    def alpha002(self) -> pd.Series:
-        """
-        Alpha#2: (-1 * correlation(rank(delta(log(volume), 2)), rank(((close - open) / open)), 6))
-        """
-        log_volume = np.log1p(self.volume) 
-        part1 = self._rank(self._delta(log_volume, 2))
-        part2 = self._rank((self.close - self.open) / self.open)
-        corr = self._correlation(part1, part2, 6)
-        raw_alpha = -1 * corr
+#     def alpha002(self) -> pd.Series:
+#         """
+#         Alpha#2: (-1 * correlation(rank(delta(log(volume), 2)), rank(((close - open) / open)), 6))
+#         """
+#         log_volume = np.log1p(self.volume) 
+#         part1 = self._rank(self._delta(log_volume, 2))
+#         part2 = self._rank((self.close - self.open) / self.open)
+#         corr = self._correlation(part1, part2, 6)
+#         raw_alpha = -1 * corr
 
-        return self._finalize_alpha(raw_alpha)
+#         return self._finalize_alpha(raw_alpha)
 
-    def alpha003(self) -> pd.Series:
-        """
-        Alpha#3: (-1 * correlation(rank(open), rank(volume), 10))
-        """
-        part1 = self._rank(self.open)
-        part2 = self._rank(self.volume)
-        corr = self._correlation(part1, part2, 10)
-        raw_alpha = -1 * corr
+#     def alpha003(self) -> pd.Series:
+#         """
+#         Alpha#3: (-1 * correlation(rank(open), rank(volume), 10))
+#         """
+#         part1 = self._rank(self.open)
+#         part2 = self._rank(self.volume)
+#         corr = self._correlation(part1, part2, 10)
+#         raw_alpha = -1 * corr
         
-        return self._finalize_alpha(raw_alpha)
+#         return self._finalize_alpha(raw_alpha)
 
-    def alpha004(self) -> pd.Series:
-        """
-        Alpha#4: (-1 * Ts_Rank(rank(low), 9))
-        """
-        ranked_low = self._rank(self.low)
-        raw_alpha = self.ts_rank(ranked_low, 9) * -1
+#     def alpha004(self) -> pd.Series:
+#         """
+#         Alpha#4: (-1 * Ts_Rank(rank(low), 9))
+#         """
+#         ranked_low = self._rank(self.low)
+#         raw_alpha = self.ts_rank(ranked_low, 9) * -1
         
-        return self._finalize_alpha(raw_alpha)
+#         return self._finalize_alpha(raw_alpha)
         
-    def alpha101(self) -> pd.Series:
-        """
-        Alpha#101: ((close - open) / ((high - low) + .001))
-        """
-        raw_alpha = (self.close - self.open) / ((self.high - self.low) + 0.001)
+#     def alpha101(self) -> pd.Series:
+#         """
+#         Alpha#101: ((close - open) / ((high - low) + .001))
+#         """
+#         raw_alpha = (self.close - self.open) / ((self.high - self.low) + 0.001)
         
-        return self._finalize_alpha(raw_alpha)
+#         return self._finalize_alpha(raw_alpha)
