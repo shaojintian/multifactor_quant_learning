@@ -1,20 +1,18 @@
-from typing import Optional
 import pandas as pd
 import numpy as np
 from util.norm import normalize_factor
 
 # --- 1. 定义各种因子的计算逻辑 (作为独立的函数) ---
 
-#trend
 def calculate_ma(series: pd.Series, window: int = 20) -> pd.Series:
     """计算简单移动平均线"""
     fct = normalize_factor(series["close"].rolling(window=window).mean())
 
     position = np.tanh(fct) * 1.5 # 平滑压缩为 [-1.5, 1.5]
-    return position.where(position.abs() >1 , 0)  # 将0值替换为NaN 0.8
+    return position.where(position.abs() >1 , 0)  # 将0值替换为NaN
 
 
-def _calculate_adx(series: pd.DataFrame, window: int = 14) -> pd.Series:
+def calculate_adx(series: pd.DataFrame, window: int = 14) -> pd.Series:
     """
     计算ADX (Average Directional Index) - 修正版
     
@@ -68,103 +66,28 @@ def _calculate_adx(series: pd.DataFrame, window: int = 14) -> pd.Series:
     return adx.reindex(series.index)
 
 
-#trend
-def calculate_advanced_ma(
-    series: pd.DataFrame,        # Changed to DataFrame to allow access to HLC for ATR/ADX
-    fast_window: int = 20,       # Slower fast MA to reduce noise (was 10)
-    slow_window: int = 60,       # Slower slow MA for more reliable trend signal (was 30)
-    adx_threshold: int = 30,     # Stricter ADX to confirm stronger trends (was 25)
-    atr_window: int = 14,        # Standard window for ATR calculation
-    volatility_multiplier: float = 2.5 # Threshold to define "chaotic" volatility
-):
-    """
-    Adjusted dual moving average strategy to be more robust in volatile/choppy markets.
-
-    Key Adjustments:
-    1.  Wider EMA Windows (20/60): Reduces sensitivity to noise and avoids whipsaws.
-    2.  Stricter ADX Threshold (30): Ensures trades are only taken in strongly trending markets.
-    3.  Volatility Filter (ATR): A new condition prevents trading when volatility is excessively
-        high (chaotic), as these periods often lead to sharp reversals.
-    4.  Reduced Leverage: Position size is capped at 1.0x (from 1.5x) to control risk.
-    """
+def calculate_advanced_ma(series: pd.Series, fast_window: int = 10, slow_window: int = 30, adx_threshold: int = 25):
     
-    # 1. Calculate the core signal (dual EMA difference)
-    fast_ma = series["close"].ewm(span=fast_window, adjust=False).mean()
+    # 1. 计算信号 (使用双均线差值)
+    fast_ma = series["close"].ewm(span=fast_window, adjust=False).mean() # 使用EMA
     slow_ma = series["close"].ewm(span=slow_window, adjust=False).mean()
     raw_signal = fast_ma - slow_ma
     
-    # Normalize the signal to a consistent scale
+    # 标准化信号
     fct = normalize_factor(raw_signal)
 
-    # 2. Define market state filters
-    
-    # Filter 1: Trend Filter (ADX)
-    # Checks if the market is in a clear directional trend.
-    adx_value = _calculate_adx(series, window=14)
+    # 2. 计算市场状态过滤器 (使用ADX)
+    adx_value = calculate_adx(series, window=14) # 假设有这么一个函数
     is_trending = adx_value > adx_threshold
 
-    # Filter 2: Volatility Filter (ATR)
-    # Avoids trading in chaotic periods by checking if current volatility is
-    # significantly higher than its recent average.
-    atr = _calculate_atr(series, window=atr_window)
-    atr_long_term_avg = atr.rolling(window=slow_window * 2, min_periods=slow_window).mean()
-    is_not_chaotic = atr < (atr_long_term_avg * volatility_multiplier)
+    # 3. 根据市场状态决定仓位
+    # 只有在趋势行情中才开仓
+    position = np.where(is_trending, np.tanh(fct) * 1.5, 0) 
+    
+    # 注意：止损逻辑通常在回测框架的执行层添加，而非在因子生成函数中
 
-    # 3. Combine filters and determine final position
-    # A position is only taken if the market is trending AND not excessively volatile.
-    trade_condition = is_trending & is_not_chaotic
-    
-    # Position sizing is now more conservative, capped at 1x leverage.
-    position = np.where(trade_condition, np.tanh(fct), 0)
-    
     return pd.Series(position, index=series.index)
 
-def _calculate_atr(series: pd.DataFrame, window: int = 14) -> pd.Series:
-    """
-    Calculates the Average True Range (ATR).
-
-    ATR is a measure of volatility. It requires High, Low, and Close prices.
-
-    Args:
-        series (pd.DataFrame): DataFrame containing 'high', 'low', and 'close' columns.
-        window (int): The lookback period for the moving average. Typically 14.
-
-    Returns:
-        pd.Series: A series containing the ATR values.
-    """
-    if not all(col in series.columns for col in ['high', 'low', 'close']):
-        raise ValueError("Input DataFrame 'series' must contain 'high', 'low', and 'close' columns.")
-
-    # Get the previous day's close
-    prev_close = series['close'].shift(1)
-
-    # Calculate the three components of True Range (TR)
-    # 1. Current High - Current Low
-    tr1 = series['high'] - series['low']
-    
-    # 2. Absolute value of Current High - Previous Close
-    tr2 = abs(series['high'] - prev_close)
-    
-    # 3. Absolute value of Current Low - Previous Close
-    tr3 = abs(series['low'] - prev_close)
-
-    # The True Range is the maximum of the three components
-    # We create a temporary DataFrame to easily find the max across the rows (axis=1)
-    true_range_components = pd.concat([tr1, tr2, tr3], axis=1)
-    true_range = true_range_components.max(axis=1, skipna=False)
-
-    # Calculate the Average True Range (ATR) using an Exponential Moving Average (EMA)
-    # adjust=False is used to match the common calculation method used in trading platforms.
-    atr = true_range.ewm(span=window, adjust=False, min_periods=window).mean()
-    
-    return atr
-
-# Example of how you would use this with the main factor function:
-# Assuming 'data' is a DataFrame with columns ['open', 'high', 'low', 'close', 'volume']
-# from some_file import _calculate_adx, normalize_factor
-# 
-# atr_values = _calculate_atr(data, window=14)
-# print(atr_values.tail())
 
 def calculate_optimized_position(
     df: pd.DataFrame, 
@@ -268,7 +191,6 @@ def combine_factors(factor_df: pd.DataFrame,
 
     return combo
 
-#reverse
 def calculate_reversal_factor_with_trend_filter(series: pd.DataFrame, 
                                                 short_window: int = 60, 
                                                 long_window: int = 2400,
@@ -455,7 +377,7 @@ def factor_bollinger_power(df: pd.DataFrame, n: int = 20, k: float = 2.0) -> pd.
 def add_factor(
     df: pd.DataFrame, 
     factor_logic_func, 
-    factor_name: Optional[str] = None, 
+    factor_name: str, 
     base_col: str = 'close', 
     **kwargs
 ) -> pd.DataFrame:
@@ -480,92 +402,15 @@ def add_factor(
 
     df_copy = df.copy()
 
-    factor_name = factor_logic_func.__name__ if factor_name is None else factor_name
     # 使用传入的函数和参数进行计算
     df_copy[factor_name] = factor_logic_func(df_copy, **kwargs)
 
     # 对齐输出列
-    final_df = df_copy.fillna(0)
+    output_columns = ['open', 'close', 'high', 'low', 'volume', factor_name]
+    final_df = df_copy[output_columns].fillna(0)
 
     final_df.name = factor_name
     return final_df
-
-
-import pandas as pd
-import numpy as np
-
-# 假设已存在以下辅助函数
-# from your_utils import _calculate_adx, _calculate_atr, normalize_factor
-
-def calculate_multi_period_momentum_filter_hourly(
-    series: pd.DataFrame,
-    short_window: int = 72,       # 短期动能均线 (约3天)
-    medium_window: int = 168,     # 中期动能均线 (约7天)
-    long_window: int = 720 * 6,       # 长期趋势过滤均线 (关键, 约180天)
-    adx_window: int = 20,         # ADX周期 (略微加长以平滑小时线噪音)
-    adx_threshold: int = 28,      # 更严格的ADX阈值，过滤掉弱趋势
-    atr_window: int = 20,         # ATR波动率计算周期
-    volatility_threshold: float = 2.5 # 波动率过滤阈值
-) -> pd.Series:
-    """
-    一个专门为【小时线】周期优化的多周期过滤动量因子。
-
-    策略逻辑:
-    1.  长期趋势过滤 (Regime Filter): 使用约30日均线 (720根小时K线) 判断整体市场方向。
-    2.  市场状态过滤 (State Filter): 使用ADX和ATR判断当前是否为“值得交易”的趋势行情。
-    3.  入场信号 (Entry Signal): 当以上所有条件满足时，使用约3日和7日的EMA交叉作为交易方向。
-    """
-
-    # --- 1. 计算所有需要的指标 ---
-    
-    # 长期趋势过滤器 (SMA更稳定)
-    long_term_ma = series['close'].rolling(window=long_window).mean()
-
-    # 中短期动能信号 (EMA更灵敏)
-    short_term_ma = series['close'].ewm(span=short_window, adjust=False).mean()
-    medium_term_ma = series['close'].ewm(span=medium_window, adjust=False).mean()
-    raw_momentum_signal = short_term_ma - medium_term_ma
-
-    # 市场状态过滤器指标
-    adx = _calculate_adx(series, window=adx_window)
-    atr = _calculate_atr(series, window=atr_window)
-    atr_ma = atr.rolling(window=long_window, min_periods=medium_window).mean()
-
-    # --- 2. 定义过滤条件 (布尔值) ---
-
-    # 主要趋势方向
-    is_long_term_bull = series['close'] > long_term_ma
-    is_long_term_bear = series['close'] < long_term_ma
-
-    # 市场状态
-    is_trending = adx > adx_threshold
-    is_not_chaotic = atr < (atr_ma * volatility_threshold)
-
-    # 动能方向
-    has_bullish_momentum = raw_momentum_signal > 0
-    has_bearish_momentum = raw_momentum_signal < 0
-
-    # --- 3. 组合逻辑，生成最终仓位 ---
-
-    # 做多条件: 长期牛市 + 市场有趋势 + 波动不极端 + 中短期看涨动能
-    can_go_long = is_long_term_bull & is_trending & is_not_chaotic & has_bullish_momentum
-
-    # 做空条件: 长期熊市 + 市场有趋势 + 波动不极端 + 中短期看跌动能
-    can_go_short = is_long_term_bear & is_trending & is_not_chaotic & has_bearish_momentum
-
-    # 初始化仓位为0
-    position = pd.Series(0.0, index=series.index)
-    
-    # 使用归一化后的信号来决定仓位大小，使得信号更稳定
-    scaled_signal = normalize_factor(raw_momentum_signal)
-    
-    position.loc[can_go_long] = np.tanh(scaled_signal[can_go_long]) # 使用tanh平滑仓位大小
-    position.loc[can_go_short] = np.tanh(scaled_signal[can_go_short])
-
-    # 对最终仓位进行轻微平滑，防止信号过于频繁地在0和非0之间跳动
-    final_position = position.ewm(span=5, adjust=False).mean()
-
-    return final_position
 
 
 def generate_signals_with_threshold(factor_series: pd.Series, long_threshold: float, short_threshold: float, is_reversal: bool = False) -> pd.Series:

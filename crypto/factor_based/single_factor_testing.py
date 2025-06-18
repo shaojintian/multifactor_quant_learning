@@ -73,15 +73,16 @@ print(ret.describe())
 #### 4. 选择并处理单因子
 # 从已生成的因子中选择一个进行回测
 # 您可以取消注释其他行来测试不同的单因子
+#alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
     filtered_df, 
-    factor_logic_func=calculate_ma, 
-    factor_name='factor_vol_adj_momentum'
+    factor_logic_func= calculate_multi_period_momentum_filter_hourly , 
 )
 # single_factor = volatility_factor
 # single_factor = adaptive_momentum_factor
 
-final_factor = final_frame[final_frame.name]
+final_factor = final_frame[final_frame.name] 
+#final_factor = alphas.alpha004()  # 选择 Alpha#101 作为单因子
 print("\n--- 原始单因子统计 ---")
 print(final_factor.describe())
 
@@ -112,26 +113,30 @@ plt.show()
 
 # %%
 # 8. 计算策略净值（考虑手续费）
-net_values = cal_net_values_compounded(final_factor,ret)
+net_values = cal_net_values(final_factor,ret)
+# 9. 计算策略净值（不考虑手续费）
+net_values_before_rebate = cal_net_values_before_rebate(final_factor,ret)
 plt.figure(figsize=(12, 6))
-plt.plot(net_values.index, net_values.values)
-plt.title(f"Net Value Curve (with fee) - {z.name} - Factor: {final_factor.name}")
+
+
+normalized_close = filtered_df["close"] / filtered_df["close"].iloc[0]
+plt.plot(filtered_df.index, normalized_close, label="normalized_close")
+# 画净值曲线（考虑手续费）
+plt.plot(net_values.index, net_values.values, label="Net Value (with fee) single interest", linewidth=2)
+
+# 画净值曲线（不考虑手续费）
+plt.plot(net_values_before_rebate.index, net_values_before_rebate.values, label="Net Value (before fee) single interest", linewidth=2, linestyle="--")
+
+# 图形设置
+plt.title(f"Net Value Curve Comparison - {z.name} - Factor: {final_factor.name}")
 plt.xlabel("Date")
 plt.ylabel("Net Value")
+plt.legend()
 plt.grid(True)
+plt.tight_layout()
 plt.show()
 
 
-# %%
-# # 9. 计算策略净值（不考虑手续费）
-# net_values_before_rebate = cal_net_values_before_rebate(final_factor,ret)
-# plt.figure(figsize=(12, 6))
-# plt.plot(net_values_before_rebate.index, net_values_before_rebate.values)
-# plt.title(f"Net Value Curve (before fee) - {z.name} - Factor: {final_factor.name}")
-# plt.xlabel("Date")
-# plt.ylabel("Net Value")
-# plt.grid(True)
-# plt.show()
 
 # %%
 # # 10. 可视化因子预测效果 (IC分析散点图)

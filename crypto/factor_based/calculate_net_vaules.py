@@ -15,9 +15,14 @@ def cal_net_values(pos: pd.Series, ret: pd.Series) -> pd.Series:
     #print(pos)
     fee = 0.0005  # 仓位每次变动的滑损(maker 0.02%， taker 0.05%)
     # 使用 np.hstack 组合当前仓位和仓位变化
-    position_changes = np.hstack((pos.iloc[0] - 0, np.diff(pos)))
-    # 计算净值
-    net_values = 1 + (pos * ret - np.abs(position_changes) * fee).cumsum()
+    position_changes = pos.diff().fillna(0)
+
+    # 小于手续费的不执行交易，手续费为 0
+    should_trade = np.abs(position_changes) > fee  # boolean mask
+    effective_fee = np.where(should_trade, np.abs(position_changes) * fee, 0)
+
+    # 最终净值计算
+    net_values = 1 + (pos * ret - effective_fee).cumsum()
 
     #fill 1
     net_values = net_values.dropna()
@@ -35,10 +40,9 @@ def cal_net_values_before_rebate(pos: pd.Series, ret: pd.Series) -> pd.Series:
     # 使用 np.hstack 组合当前仓位和仓位变化
     position_changes = np.hstack((pos.iloc[0] - 0, np.diff(pos)))
     # 计算净值
-    net_values = 1 + (pos * ret).cumsum()
-    #net_values = 1 + (pos * ret).cumsum()
+    net_values = 1 + (pos * ret ).cumsum()
 
-     #fill 1
+    #fill 1
     net_values = net_values.dropna()
     return net_values  # 返回净值序列
 def cal_net_values_compounded(pos: pd.Series, ret: pd.Series, fee: float = 0.0005, initial_value: float = 1.0) -> pd.Series:
