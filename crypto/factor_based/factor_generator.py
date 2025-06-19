@@ -7,13 +7,27 @@ from util.norm import *
 
 #1.1trend vol AS0.77
 #你可以用n个周期后的ret作为label，还可以再雕琢一下，用n个周期后不高于/不低于某个价格位置作为label
-def calculate_ma(series: pd.Series, window: int = 20) -> pd.Series:
+# filter 震荡市
+def calculate_ma(series: pd.Series, window: int = 20*24) -> pd.Series:
     """计算简单移动平均线"""
-    fct = normalize_factor(series["close"].rolling(window=window).mean().ewm(span=5).mean())
+    fct = normalize_factor(series["close"].rolling(window=window).mean().ewm(span=5*24).mean())
 
     position = np.tanh(fct) * 1.5 # 平滑压缩为 [-1.5, 1.5]
     return position  # 将0值替换为NaN 0.8
 
+def fct001(df: pd.DataFrame) -> pd.Series:
+    """One-liner version of the factor calculation."""
+    #ratio = ratio.clip(lower=0.8, upper=1.2)  # 控制在合理区间内，防止极端值
+    
+    raw_factor = -df['volatility']**2 * np.log(df['volatility']**2 * np.log(np.log(df['close'] / (df['high'] + 1e-9))**2) * np.log(df['close'] / (df['high'] + 1e-9)))
+    #factor = pd.Series(winsorize(raw_factor, limits=[0.01, 0.01]), index=df.index)
+    #
+    factor = normalize_factor(raw_factor)  # Normalize the factor to handle NaNs and scale it
+    # threshold = factor.abs().quantile(0.999)
+    # filtered = factor.where(factor.abs() <= threshold, -factor)
+
+    #neg_factor = normalize_factor(-raw_factor)
+    return factor # Smoothing with EWM
 
 def _calculate_adx(series: pd.DataFrame, window: int = 14) -> pd.Series:
     """
@@ -257,19 +271,7 @@ def _ts_corr(series1: pd.Series, series2: pd.Series, window: int = 10) -> pd.Ser
     return series1.rolling(window=window).corr(series2)
 #0.6 反应过度，衰竭延续 0.9
 #########yuming
-def fct001(df: pd.DataFrame) -> pd.Series:
-    """One-liner version of the factor calculation."""
-    #ratio = ratio.clip(lower=0.8, upper=1.2)  # 控制在合理区间内，防止极端值
-    
-    raw_factor = -df['volatility']**2 * np.log(df['volatility']**2 * np.log(np.log(df['close'] / (df['high'] + 1e-9))**2) * np.log(df['close'] / (df['high'] + 1e-9)))
-    #factor = pd.Series(winsorize(raw_factor, limits=[0.01, 0.01]), index=df.index)
-    #
-    factor = normalize_factor(raw_factor)  # Normalize the factor to handle NaNs and scale it
-    # threshold = factor.abs().quantile(0.999)
-    # filtered = factor.where(factor.abs() <= threshold, -factor)
 
-    #neg_factor = normalize_factor(-raw_factor)
-    return factor # Smoothing with EWM
 
 def fct005(df: pd.DataFrame, window: int = 10, delay: int = 1) -> pd.Series:
     """
@@ -555,7 +557,7 @@ def fct003(
     return normalize_factor(-factor)
 
 
-def fct004(df: pd.DataFrame, window: int = 20) -> pd.Series:
+def fct004(df: pd.DataFrame, window: int = 20*24) -> pd.Series:
     """
     Computes a factor by multiplying historical volatility by lagged returns.
 
@@ -621,7 +623,7 @@ def fct010(df: pd.DataFrame) -> pd.Series:
     :param df: 包含 'close', 'volume' 列的DataFrame。
     :return: 计算并标准化后的因子Series。
     """
-    WINDOW = 10*24  # 假设的时间序列操作窗口
+    WINDOW = 14*24  # 假设的时间序列操作窗口
     
     returns = df['close'].pct_change()
     avg_volume_7 = df['avg_volume_7']
@@ -671,7 +673,7 @@ def fct012(df: pd.DataFrame) -> pd.Series:
     :param df: 包含 'low', 'open', 'close' 列的DataFrame。
     :return: 计算并标准化后的因子Series。
     """
-    WINDOW = 10
+    WINDOW = 10*24
     
     log_return = np.abs(np.log(df['close'] / df['close'].shift(1)))
     
@@ -680,9 +682,9 @@ def fct012(df: pd.DataFrame) -> pd.Series:
     
     corr_term = _ts_corr(ts_rank_low, ts_rank_open_neg, window=WINDOW)
     
-    factor = corr_term * log_return
+    factor = normalize_factor(-corr_term * log_return)
     
-    return normalize_factor(factor)
+    return factor.where(factor.abs() >0.5,0)
 
 
 def fct013(df: pd.DataFrame) -> pd.Series:
@@ -694,7 +696,7 @@ def fct013(df: pd.DataFrame) -> pd.Series:
     :param df: 包含 'volume' 列的DataFrame。
     :return: 计算并标准化后的因子Series。
     """
-    avg_volume_20 = df['volume'].rolling(window=20).mean()
+    avg_volume_20 = df['volume'].rolling(window=20*7).mean()
     
     # 这个因子在avg_volume_20非零的地方等于1，否则为NaN。
     # 这是一个几乎没有信息的因子。
@@ -714,7 +716,7 @@ def fct014(df: pd.DataFrame) -> pd.Series:
     :param df: 包含 'close' 列的DataFrame。
     :return: 计算并标准化后的因子Series。
     """
-    WINDOW = 10
+    WINDOW = 10*24
     
     log_return = np.log(df['close'] / df['close'].shift(1))
     const_series = pd.Series(0.326, index=df.index)
