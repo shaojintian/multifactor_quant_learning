@@ -81,7 +81,7 @@ print(ret.describe())
 #alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
     filtered_df, 
-    factor_logic_func= single
+    factor_logic_func= fct001
 
 )
 print(final_frame.columns)

@@ -259,3 +259,67 @@ open time                                      ...
   适应度 (Fitness): 0.000000
   OOB适应度 (OOB Fitness): 0.000000
   因子长度 (Length): 1
+/Users/wanting/Downloads/multifactor_quant_learning/crypto/factor_based/factor_generator.py:1410: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df.dropna(inplace=True)
+模拟数据前5行:
+                               open      high  ...  returns_20_std    trades_std
+open time                                      ...                              
+2020-10-01 01:00:00+00:00  10788.30  10849.97  ...        0.003650  12425.050843
+2020-10-01 02:00:00+00:00  10838.89  10857.47  ...        0.003645  12435.907549
+2020-10-01 03:00:00+00:00  10817.14  10824.22  ...        0.003642  12443.581286
+2020-10-01 04:00:00+00:00  10798.38  10826.42  ...        0.003642  12459.495305
+2020-10-01 05:00:00+00:00  10800.00  10826.00  ...        0.003633  12468.284381
+
+[5 rows x 20 columns]
+
+开始进行遗传编程因子挖掘...
+    |   Population Average    |             Best Individual              |
+---- ------------------------- ------------------------------------------ ----------
+ Gen   Length          Fitness   Length          Fitness      OOB Fitness  Time Left
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)
+   0     7.45        0.0591086        4         0.817208         0.808242     15.19m
+   1     6.88         0.180999        5         0.872823         0.880051     13.18m
+   2     5.72          0.38375        5         0.874948         0.860782      9.83m
+   3     5.73         0.371881       12         0.888467         0.890801     13.93m
+   4     5.07         0.407569       12         0.888847          0.88736      3.01m
+   5     5.39         0.468894       11         0.897306         0.895542     59.20s
+   6     6.66         0.451847       12         0.899051         0.890473      1.28m
+   7     9.41         0.563756       12         0.902096         0.905532      0.00s
+
+==================================================
+--- 最好的10个因子 (按适应度排序) ---
+==================================================
+
+排名 1:
+  因子表达式: ts_corr(div(neg(open), neg(open)), log_return)
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 7
+
+排名 2:
+  因子表达式: sub(log(ts_rank(returns)), abs(ts_corr(avg_volume_7, -0.578)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 8
+
+排名 3:
+  因子表达式: mul(ts_corr(div(avg_volume_20, volume), log_return), sqrt(ts_skewness(log(ts_corr(0.880, open)))))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 12
+
+排名 4:
+  因子表达式: ts_corr(div(volume, volume), log_return)
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 5
+
+排名 5:
+  因子表达式: div(avg_volume_20, avg_volume_20)
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 3

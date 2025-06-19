@@ -264,7 +264,7 @@ def combine_factors_lightgbm(df: pd.DataFrame,
     df['future_calmar'] =  _compute_rolling_calmar(df[return_col].shift(-1))  # LightGBM 参数
     X = df[factor_cols]
     X = risk_orthogonalization(X)  # 风险正交化处理
-    y = df['future_calmar']
+    y = df[return_col].shift(-1).rolling(window=3*24, min_periods=24).mean().fillna(0)
 
     # LightGBM 参数
     if lgbm_params is None:
@@ -292,7 +292,12 @@ def combine_factors_lightgbm(df: pd.DataFrame,
     y_train = y[:len(y)*4//5]  # 前 80% 数据作为训练集
     model.fit(X_train, y_train)
 
-    # 提取特征重要性作为线性权重组合
+    # raw_combined_factor = model.predict(X)
+
+    # # 3. 转换为时间序列因子
+    # combined_factor = pd.Series(raw_combined_factor, index=df.index, name="non_linear_factor")
+
+    #提取特征重要性作为线性权重组合
     importance = model.feature_importances_
     weights = importance / importance.sum()
 
