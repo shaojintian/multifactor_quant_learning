@@ -256,6 +256,7 @@ def _ts_corr(series1: pd.Series, series2: pd.Series, window: int = 10) -> pd.Ser
     """
     return series1.rolling(window=window).corr(series2)
 #0.6 反应过度，衰竭延续 0.9
+#########yuming
 def fct001(df: pd.DataFrame) -> pd.Series:
     """One-liner version of the factor calculation."""
     #ratio = ratio.clip(lower=0.8, upper=1.2)  # 控制在合理区间内，防止极端值
