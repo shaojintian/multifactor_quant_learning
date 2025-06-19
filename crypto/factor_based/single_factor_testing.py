@@ -81,7 +81,7 @@ print(ret.describe())
 #alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
     filtered_df, 
-    factor_logic_func= fct001
+    factor_logic_func= single
 
 )
 print(final_frame.columns)
@@ -93,7 +93,7 @@ final_factor = final_frame[final_frame.name]
 print("\n--- 原始单因子统计 ---")
 print(final_factor.describe())
 
-final_factor.to_csv('factor_test_data/crypto/fct001_factor.csv')
+#final_factor.to_csv('factor_test_data/crypto/fct001_factor.csv')
 
 
 
@@ -128,10 +128,11 @@ net_values_before_rebate = cal_net_values_before_rebate(final_factor,ret)
 plt.figure(figsize=(12, 6))
 
 
+
 normalized_close = filtered_df["close"] / filtered_df["close"].iloc[0]
 plt.plot(filtered_df.index, normalized_close, label="normalized_close")
 # 画净值曲线（考虑手续费）
-plt.plot(net_values.index, net_values.values, label="Net Value (with fee) single interest", linewidth=2)
+plt.plot(net_values.index, net_values.values, label="Net Value (with fee) single", linewidth=2)
 
 # 画净值曲线（不考虑手续费）
 plt.plot(net_values_before_rebate.index, net_values_before_rebate.values, label="Net Value (before fee) single interest", linewidth=2, linestyle="--")
@@ -186,3 +187,6 @@ plt.figtext(0.5, 0.01, f"Max Drawdown: {max_drawdown:.2%}", ha="center", fontsiz
 
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # 预留上下空间避免覆盖
 plt.show()
+
+
+

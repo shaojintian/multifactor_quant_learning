@@ -50,7 +50,7 @@ import datetime
 filtered_df = z
 filtered_df.index = pd.to_datetime(filtered_df.index, unit='ms', utc=True)
 filtered_df = preprocess_data(filtered_df)
-
+#filtered_df = filtered_df.loc[filtered_df.index > pd.Timestamp("2024-06-01").tz_localize("UTC")]
 #z.head()
 
 # %%
@@ -107,15 +107,17 @@ final_frame = add_factor(
     factor_logic_func=fct001 #Share 1.3
 )
 
-# final_frame = add_factor(
-#     final_frame, 
-#     factor_logic_func=fct002
-# )
+
+
+final_frame = add_factor(
+    final_frame, 
+    factor_logic_func=factor_bollinger_power
+)
 # single_factor = volatility_factor
 # single_factor = adaptive_momentum_factor
 
 print("\n--- 多因子组合 ---",final_frame.columns[-6:])
-final_factor = combine_factors_lightgbm(final_frame, factor_cols=["calculate_optimized_position_v2","fct001","calculate_ma"],weights=[0.8,0.2])
+final_factor = combine_factors_lightgbm(final_frame, factor_cols=["fct001","factor_bollinger_power","calculate_ma","calculate_optimized_position_v2","calculate_multi_period_momentum_filter_hourly"],weights=[0.8,0.2])
 # final_factor = combine_factors_linear(final_frame, factor_cols=final_frame.columns[-6:],weights=[0.2,0.2,0.2,0.2,0.2,0.2]) 
 #final_factor = alphas.alpha004()  # 选择 Alpha#101 作为单因子
 print("\n--- 原始多因子统计 ---")

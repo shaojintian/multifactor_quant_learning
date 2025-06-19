@@ -35,8 +35,59 @@ def cal_net_values(pos: pd.Series, ret: pd.Series) -> pd.Series:
     net_values = net_values.dropna()
     return net_values  # 返回净值序列
 
-    
 
+
+    
+def cal_net_values_soft_stop(pos: pd.Series, ret: pd.Series, fee: float = 0.0005, stop_drawdown: float = 0.08, resume_drawdown: float = 0.04) -> pd.Series:
+    """
+    计算净值序列，加入最大回撤软止损逻辑：
+    - 回撤超过8%时清仓
+    - 回撤缩小到4%以内或净值创新高时恢复交易
+    """
+    pos = pos.copy()
+    position_changes = pos.diff().fillna(0)
+    should_trade = np.abs(position_changes) > 0.5
+    effective_pos = pos.where(should_trade, other=pos.shift(1)).fillna(0)
+
+    net_values = [1.0]
+    max_net = 1.0
+    stop = False
+    current_pos = 0
+
+    for i in range(len(ret)):
+        fee_cost = abs(position_changes.iloc[i]) * fee if should_trade.iloc[i] else 0
+
+        # 回撤控制
+        if stop:
+            current_pos = 0  # 清仓
+        else:
+            current_pos = effective_pos.iloc[i]
+
+        # 本期净值
+        pnl = current_pos * ret.iloc[i] - fee_cost
+        new_net = net_values[-1] + pnl
+        net_values.append(new_net)
+
+        # 更新最大净值
+        if new_net > max_net:
+            max_net = new_net
+            stop = False  # 创新高 → 恢复交易
+
+        # 计算回撤
+        dd = (new_net - max_net) / max_net
+
+        # 触发止损
+        if dd < -stop_drawdown:
+            stop = True  # 进入止损状态
+
+        # 若回撤恢复到阈值之上 → 恢复交易
+        elif stop and dd > -resume_drawdown:
+            stop = False
+
+    net_values = pd.Series(net_values[1:], index=ret.index)
+    return net_values
+
+    
 
 
 

@@ -38,3 +38,224 @@ open time                                      ...
     |   Population Average    |             Best Individual              |
 ---- ------------------------- ------------------------------------------ ----------
  Gen   Length          Fitness   Length          Fitness      OOB Fitness  Time Left
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)
+   0     7.90        0.0437927        6         0.222768         0.241146     36.40m
+   1     5.77         0.107314        6          0.27917         0.258839     30.59m
+   2     7.13         0.137249        5         0.284407          0.21155     29.53m
+   3     8.65         0.149099        8         0.295632         0.319245     32.11m
+   4     6.67         0.170323        8         0.300573         0.274656     33.08m
+   5     7.36          0.18172       14          0.31372         0.311351     26.85m
+   6     8.54           0.1921       14          0.31502         0.299613     18.16m
+   7     9.45         0.204346       19         0.339639         0.327355      0.00s
+
+==================================================
+--- 最好的10个因子 (按适应度排序) ---
+==================================================
+
+排名 1:
+  因子表达式: add(ts_rank(close), ts_corr(sqrt(ts_delay(ts_rank(mul(ts_corr(high, high), sub(volatility, taker buy quote asset volume))))), ts_rank(open)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 16
+
+排名 2:
+  因子表达式: add(ts_rank(close), ts_corr(ts_rank(close), ts_rank(open)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 8
+
+排名 3:
+  因子表达式: add(ts_rank(close), ts_corr(ts_corr(sqrt(sqrt(log(taker buy base asset volume))), ts_rank(open)), ts_rank(open)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 13
+
+排名 4:
+  因子表达式: add(ts_rank(open), ts_corr(div(ts_rank(ts_rank(quote asset volume)), neg(log(-0.814))), ts_rank(open)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 13
+
+排名 5:
+  因子表达式: add(ts_rank(close), ts_corr(taker buy quote asset volume, ts_rank(low)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 7
+   0     7.90        0.0437927        6         0.222768         0.241146     36.85m
+   1     5.77         0.107314        6          0.27917         0.258839     30.39m
+   2     7.13         0.137249        5         0.284407          0.21155     29.63m
+   3     8.65         0.149099        8         0.295632         0.319245     32.27m
+   4     6.67         0.170323        8         0.300573         0.274656     33.22m
+   5     7.36          0.18172       14          0.31372         0.311351     27.37m
+   6     8.54           0.1921       14          0.31502         0.299613     18.07m
+   7     9.45         0.204346       19         0.339639         0.327355      0.00s
+
+==================================================
+--- 最好的10个因子 (按适应度排序) ---
+==================================================
+
+排名 1:
+  因子表达式: add(ts_rank(close), ts_corr(sqrt(ts_delay(ts_rank(mul(ts_corr(high, high), sub(volatility, taker buy quote asset volume))))), ts_rank(open)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 16
+
+排名 2:
+  因子表达式: add(ts_rank(close), ts_corr(ts_rank(close), ts_rank(open)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 8
+
+排名 3:
+  因子表达式: add(ts_rank(close), ts_corr(ts_corr(sqrt(sqrt(log(taker buy base asset volume))), ts_rank(open)), ts_rank(open)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 13
+
+排名 4:
+  因子表达式: add(ts_rank(open), ts_corr(div(ts_rank(ts_rank(quote asset volume)), neg(log(-0.814))), ts_rank(open)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 13
+
+排名 5:
+  因子表达式: add(ts_rank(close), ts_corr(taker buy quote asset volume, ts_rank(low)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 7
+模拟数据前5行:
+                               open      high  ...  returns_20_std   trades_std
+open time                                      ...                             
+2018-01-01 20:00:00+00:00  13222.03  13472.00  ...        0.012895  1287.332758
+2018-01-01 21:00:00+00:00  13399.23  13580.67  ...        0.011687  1287.019219
+2018-01-01 22:00:00+00:00  13494.99  13599.70  ...        0.011531  1290.719354
+2018-01-01 23:00:00+00:00  13455.24  13500.00  ...        0.011526  1288.383576
+2018-01-02 00:00:00+00:00  13382.16  13850.00  ...        0.012729  1343.003228
+
+[5 rows x 20 columns]
+
+开始进行遗传编程因子挖掘...
+    |   Population Average    |             Best Individual              |
+---- ------------------------- ------------------------------------------ ----------
+ Gen   Length          Fitness   Length          Fitness      OOB Fitness  Time Left
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)
+   0     7.90       0.00522683        8        0.0419937        0.0211063     29.23m
+   1     3.81        0.0157407        5        0.0787422        0.0416159     16.62m
+   2     3.20        0.0288933        6        0.0873996        0.0229267      2.64m
+   3     4.25        0.0393806        5        0.0970251        0.0700927      1.16m
+   4     5.48        0.0454757        5        0.0970152         0.143926     56.99s
+   5     5.39        0.0472932        5          0.10037         0.201566     39.57s
+   6     5.25         0.045443        5         0.100679        0.0842623     22.40s
+   7     5.25        0.0475483        5        0.0977468        0.0685216      0.00s
+
+==================================================
+--- 最好的10个因子 (按适应度排序) ---
+==================================================
+
+排名 1:
+  因子表达式: sub(log(ts_rank(returns)), abs(ts_corr(avg_volume_7, -0.578)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 8
+
+排名 2:
+  因子表达式: mul(abs(log_return), log(ts_corr(0.880, open)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 7
+
+排名 3:
+  因子表达式: mul(ts_corr(ts_rank(sqrt(low)), ts_rank(neg(open))), abs(log_return))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 10
+
+排名 4:
+  因子表达式: div(avg_volume_20, avg_volume_20)
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 3
+
+排名 5:
+  因子表达式: mul(abs(log_return), ts_corr(ts_rank(close), ts_corr(0.326, log_return)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 9
+/Users/wanting/Downloads/multifactor_quant_learning/crypto/factor_based/factor_generator.py:1264: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df.dropna(inplace=True)
+模拟数据前5行:
+                               open      high  ...  returns_20_std   trades_std
+open time                                      ...                             
+2020-10-01 01:00:00+00:00  10788.30  10849.97  ...        0.002374  3883.234114
+2020-10-01 02:00:00+00:00  10838.89  10857.47  ...        0.002427  4029.466564
+2020-10-01 03:00:00+00:00  10817.14  10824.22  ...        0.002452  4322.720530
+2020-10-01 04:00:00+00:00  10798.38  10826.42  ...        0.002452  4679.701401
+2020-10-01 05:00:00+00:00  10800.00  10826.00  ...        0.002456  4632.084245
+
+[5 rows x 20 columns]
+
+开始进行遗传编程因子挖掘...
+    |   Population Average    |             Best Individual              |
+---- ------------------------- ------------------------------------------ ----------
+ Gen   Length          Fitness   Length          Fitness      OOB Fitness  Time Left
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)
+   0     7.45        0.0626968        4         0.817208         0.808242     15.90m
+   1     6.92          0.19942        4         0.849783         0.852236     12.50m
+   2     6.32         0.375065        4         0.850887          0.84169     12.18m
+   3     5.93         0.383299        4         0.850868          0.84216     15.89m
+   4     4.32         0.379795        5         0.854775         0.856186      8.03m
+   5     4.11         0.490764        6         0.901127          0.90611     57.07s
+   6     4.66         0.495747        6         0.902184         0.896877     12.39s
+   7     5.58         0.577106        5         0.914736         0.918874      0.00s
+
+==================================================
+--- 最好的10个因子 (按适应度排序) ---
+==================================================
+
+排名 1:
+  因子表达式: sub(log(ts_rank(returns)), abs(ts_corr(avg_volume_7, -0.578)))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 8
+
+排名 2:
+  因子表达式: ts_corr(returns, log(log(log(ts_corr(0.880, open)))))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 8
+
+排名 3:
+  因子表达式: ts_corr(returns, div(avg_volume_20, avg_volume_20))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 5
+
+排名 4:
+  因子表达式: ts_corr(returns, log(ts_corr(ts_rank(close), ts_corr(0.326, log_return))))
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 9
+
+排名 5:
+  因子表达式: 0.238
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 1

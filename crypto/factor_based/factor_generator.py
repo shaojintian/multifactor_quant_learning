@@ -5,13 +5,14 @@ from util.norm import *
 
 # --- 1. 定义各种因子的计算逻辑 (作为独立的函数) ---
 
-#1.1trend
+#1.1trend vol AS0.77
+#你可以用n个周期后的ret作为label，还可以再雕琢一下，用n个周期后不高于/不低于某个价格位置作为label
 def calculate_ma(series: pd.Series, window: int = 20) -> pd.Series:
     """计算简单移动平均线"""
-    fct = normalize_factor(series["close"].rolling(window=window).mean())
+    fct = normalize_factor(series["close"].rolling(window=window).mean().ewm(span=5).mean())
 
     position = np.tanh(fct) * 1.5 # 平滑压缩为 [-1.5, 1.5]
-    return position.where(position.abs() >1 , 0)  # 将0值替换为NaN 0.8
+    return position  # 将0值替换为NaN 0.8
 
 
 def _calculate_adx(series: pd.DataFrame, window: int = 14) -> pd.Series:
@@ -233,18 +234,255 @@ def calculate_optimized_position(
     return final_position
 
 from scipy.stats.mstats import winsorize
+
+def _ts_rank(series: pd.Series, window: int = 10) -> pd.Series:
+    """
+    时间序列排名。计算每个点在过去`window`天内的百分比排名。
+    
+    :param series: 输入时间序列。
+    :param window: 滚动窗口大小。
+    :return: 排名后的时间序列 (0到1之间)。
+    """
+    return series.rolling(window=window).rank(pct=True)
+
+def _ts_corr(series1: pd.Series, series2: pd.Series, window: int = 10) -> pd.Series:
+    """
+    时间序列相关性。计算两个序列在过去`window`天内的滚动相关性。
+    
+    :param series1: 第一个输入时间序列。
+    :param series2: 第二个输入时间序列。
+    :param window: 滚动窗口大小。
+    :return: 滚动相关性序列。
+    """
+    return series1.rolling(window=window).corr(series2)
+#0.6 反应过度，衰竭延续 0.9
 def fct001(df: pd.DataFrame) -> pd.Series:
     """One-liner version of the factor calculation."""
-    ratio = df['close'] / (df['high'] + 1e-9)
     #ratio = ratio.clip(lower=0.8, upper=1.2)  # 控制在合理区间内，防止极端值
     
-    raw_factor = -df['volatility']**2 * np.log(df['volatility']**2 * np.log(np.log(ratio)**2) * np.log(ratio))
-    factor = pd.Series(winsorize(raw_factor, limits=[0.01, 0.01]), index=df.index)
+    raw_factor = -df['volatility']**2 * np.log(df['volatility']**2 * np.log(np.log(df['close'] / (df['high'] + 1e-9))**2) * np.log(df['close'] / (df['high'] + 1e-9)))
+    #factor = pd.Series(winsorize(raw_factor, limits=[0.01, 0.01]), index=df.index)
     #
-    factor = normalize_factor(factor)  # Normalize the factor to handle NaNs and scale it
+    factor = normalize_factor(raw_factor)  # Normalize the factor to handle NaNs and scale it
     # threshold = factor.abs().quantile(0.999)
     # filtered = factor.where(factor.abs() <= threshold, -factor)
-    return factor  # Smoothing with EWM
+
+    #neg_factor = normalize_factor(-raw_factor)
+    return factor # Smoothing with EWM
+
+def fct005(df: pd.DataFrame, window: int = 10, delay: int = 1) -> pd.Series:
+    """
+    排名 1 的 Alpha 因子
+
+    因子表达式:
+    add(_ts_rank(close), _ts_corr(sqrt(ts_delay(_ts_rank(mul(_ts_corr(high, high), sub(volatility, taker buy quote asset volume))))), _ts_rank(open)))
+    
+    Args:
+        df (pd.DataFrame): 
+            输入数据框，必须包含 'close', 'high', 'volatility', 
+            'taker buy quote asset volume', 'open' 列。
+        window (int, optional): 时间序列操作的回看窗口。默认为 10。
+        delay (int, optional): ts_delay 的延迟期。默认为 1。
+
+    Returns:
+        pd.Series: 计算出的因子值序列。
+    """
+    required_cols = ['close', 'high', 'volatility', 'taker buy quote asset volume', 'open']
+    if not all(col in df.columns for col in required_cols):
+        raise ValueError(f"输入 DataFrame 必须包含以下列: {required_cols}")
+
+    # 定义 _ts_rank 的 lambda 函数
+    _ts_rank = lambda s: s.rolling(window).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+
+    # _ts_corr(high, high) 在窗口期内方差不为0时恒为1
+    ts_corr_high_high = df['high'].rolling(window).corr(df['high']).fillna(1.0)
+    sub_vol_taker = df['volatility'] - df['taker buy quote asset volume']
+    mul_term = ts_corr_high_high * sub_vol_taker
+    
+    ts_rank_mul = _ts_rank(mul_term)
+    ts_delay_rank = ts_rank_mul.shift(delay)
+    
+    # 为避免对负数开方，使用 clip(lower=0)
+    sqrt_delayed_rank = np.sqrt(ts_delay_rank.clip(lower=0))
+
+    ts_rank_open = _ts_rank(df['open'])
+    
+    correlation_term = sqrt_delayed_rank.rolling(window).corr(ts_rank_open)
+    ts_rank_close = _ts_rank(df['close'])
+    
+    alpha_factor = ts_rank_close + correlation_term
+    return normalize_factor(-alpha_factor)
+
+
+def fct006(df: pd.DataFrame, window: int = 10) -> pd.Series:
+    """
+    排名 2 的 Alpha 因子
+
+    因子表达式:
+    add(_ts_rank(close), _ts_corr(_ts_rank(close), _ts_rank(open)))
+    
+    Args:
+        df (pd.DataFrame): 输入数据框，必须包含 'open' 和 'close' 列。
+        window (int, optional): 时间序列操作的回看窗口。默认为 10。
+
+    Returns:
+        pd.Series: 计算出的因子值序列。
+    """
+    if 'open' not in df.columns or 'close' not in df.columns:
+        raise ValueError("输入 DataFrame 必须包含 'open' 和 'close' 列。")
+
+    ts_rank_close = df['close'].rolling(window).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+    ts_rank_open = df['open'].rolling(window).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+
+    ts_correlation = ts_rank_close.rolling(window).corr(ts_rank_open)
+
+    alpha_factor = ts_rank_close + ts_correlation
+    return normalize_factor(-alpha_factor)
+
+
+def fct007(df: pd.DataFrame, window: int = 10) -> pd.Series:
+    """
+    排名 3 的 Alpha 因子
+
+    因子表达式:
+    add(_ts_rank(close), _ts_corr(_ts_corr(sqrt(sqrt(log(taker buy base asset volume))), _ts_rank(open)), _ts_rank(open)))
+    
+    Args:
+        df (pd.DataFrame): 
+            输入数据框，必须包含 'close', 'taker buy base asset volume', 'open' 列。
+        window (int, optional): 时间序列操作的回看窗口。默认为 10。
+
+    Returns:
+        pd.Series: 计算出的因子值序列。
+    """
+    required_cols = ['close', 'taker buy base asset volume', 'open']
+    if not all(col in df.columns for col in required_cols):
+        raise ValueError(f"输入 DataFrame 必须包含以下列: {required_cols}")
+
+    _ts_rank = lambda s: s.rolling(window).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+    
+    # 处理 log(0) 或 log(负数)，并处理 log(x) < 0 (当0<x<1) 的情况
+    log_taker_buy = np.log(df['taker buy base asset volume'].clip(lower=1e-9))
+    sqrt1_log = np.sqrt(log_taker_buy.clip(lower=0))
+    sqrt2_log = np.sqrt(sqrt1_log)
+
+    ts_rank_open = _ts_rank(df['open'])
+    
+    inner_corr = sqrt2_log.rolling(window).corr(ts_rank_open)
+    outer_corr = inner_corr.rolling(window).corr(ts_rank_open)
+    
+    ts_rank_close = _ts_rank(df['close'])
+    
+    alpha_factor = ts_rank_close + outer_corr
+    return normalize_factor(alpha_factor)
+
+
+def fct008(df: pd.DataFrame, window: int = 10) -> pd.Series:
+    """
+    排名 4 的 Alpha 因子
+
+    因子表达式:
+    add(_ts_rank(open), _ts_corr(div(_ts_rank(_ts_rank(quote asset volume)), neg(log(-0.814))), _ts_rank(open)))
+    
+    注意: 表达式中 neg(log(-0.814)) 在实数域无定义。此处假设其意图为
+    neg(log(abs(-0.814)))，并将其作为常数处理。
+
+    Args:
+        df (pd.DataFrame): 输入数据框，必须包含 'open' 和 'quote asset volume' 列。
+        window (int, optional): 时间序列操作的回看窗口。默认为 10。
+
+    Returns:
+        pd.Series: 计算出的因子值序列。
+    """
+    required_cols = ['open', 'quote asset volume']
+    if not all(col in df.columns for col in required_cols):
+        raise ValueError(f"输入 DataFrame 必须包含以下列: {required_cols}")
+
+    _ts_rank = lambda s: s.rolling(window).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+
+    # 计算常数部分
+    constant_val = -np.log(abs(-0.814))  #约 0.2058
+
+    ts_rank_qav = _ts_rank(df['quote asset volume'])
+    ts_rank_ts_rank_qav = _ts_rank(ts_rank_qav) # 嵌套 _ts_rank
+
+    div_term = ts_rank_ts_rank_qav / constant_val
+
+    ts_rank_open = _ts_rank(df['open'])
+    
+    correlation_term = div_term.rolling(window).corr(ts_rank_open)
+    
+    alpha_factor = ts_rank_open + correlation_term
+    return alpha_factor
+
+
+def fct009(df: pd.DataFrame, window: int = 10) -> pd.Series:
+    """
+    排名 5 的 Alpha 因子
+
+    因子表达式:
+    add(_ts_rank(close), _ts_corr(taker buy quote asset volume, _ts_rank(low)))
+    
+    Args:
+        df (pd.DataFrame): 
+            输入数据框，必须包含 'close', 'taker buy quote asset volume', 'low' 列。
+        window (int, optional): 时间序列操作的回看窗口。默认为 10。
+
+    Returns:
+        pd.Series: 计算出的因子值序列。
+    """
+    required_cols = ['close', 'taker buy quote asset volume', 'low']
+    if not all(col in df.columns for col in required_cols):
+        raise ValueError(f"输入 DataFrame 必须包含以下列: {required_cols}")
+    
+    ts_rank_low = df['low'].rolling(window).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+    ts_rank_close = df['close'].rolling(window).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+    
+    # 注意：这里直接使用原始的 'taker buy quote asset volume'
+    correlation_term = df['taker buy quote asset volume'].rolling(window).corr(ts_rank_low)
+    
+    alpha_factor = ts_rank_close + correlation_term
+    return normalize_factor(alpha_factor)
+
+
+def calculate_fct001_with_trend_filter(df: pd.DataFrame) -> pd.Series:
+    """
+    计算fct001，并使用50日均线作为趋势过滤器，
+    以避免在连续恐慌下跌行情中产生错误信号。
+    """
+    # 1. 定义趋势过滤器
+    # 计算50日简单移动平均线
+    sma_50 = df['close'].rolling(window=7*24, min_periods=20).mean() # min_periods防止早期太多NaN
+    
+    # 创建一个布尔掩码：当收盘价 > 50日线时为True，表示处于上升趋势
+    is_in_uptrend = df['close'] > sma_50
+
+    # 2. 计算原始因子
+    # (为了代码整洁，我们把之前的逻辑放在这里)
+    volatility = df['volatility']
+    close = df['close']
+    high = df['high']
+    
+    # 防止除以0或log(0)的错误
+    safe_high = high + 1e-9
+    log_c_h = np.log(close / safe_high)
+
+    # 复杂的内部项，用try-except处理可能的数学错误（如log负数）
+    try:
+        inner_log = np.log(volatility**2 * np.log(log_c_h**2))
+        raw_factor = -volatility**2 * inner_log * log_c_h
+    except (ValueError, FloatingPointError):
+        # 如果计算出错，则生成一个全为NaN的Series
+        raw_factor = pd.Series(np.nan, index=df.index)
+
+    # 3. 应用过滤器
+    # 将所有不处于上升趋势的日子的因子值设为0（或np.nan）
+    # 这样做，因子就不会在下降趋势中给出任何信号
+    filtered_factor = raw_factor.copy()
+    filtered_factor[~is_in_uptrend] = 0 # ~is_in_uptrend 表示选择处于下降趋势的日子
+
+    filtered_factor.name = 'fct001_filtered'
+    return normalize_factor(filtered_factor)
 
 def fct002(df: pd.DataFrame) -> pd.Series:
     """
@@ -369,6 +607,131 @@ def fct004(df: pd.DataFrame, window: int = 20) -> pd.Series:
     factor = normalize_factor(factor)
     return factor
 
+
+# --- 因子函数生成 ---
+
+def fct010(df: pd.DataFrame) -> pd.Series:
+    """
+    排名 1 的因子实现。
+    
+    原始公式: sub(log(_ts_rank(returns)), abs(_ts_corr(avg_volume_7, -0.578)))
+    假设窗口期: 10
+    
+    :param df: 包含 'close', 'volume' 列的DataFrame。
+    :return: 计算并标准化后的因子Series。
+    """
+    WINDOW = 10*24  # 假设的时间序列操作窗口
+    
+    returns = df['close'].pct_change()
+    avg_volume_7 = df['avg_volume_7']
+    # 创建一个与df索引对齐的常数Series
+    const_series = pd.Series(-0.578, index=df.index)
+    
+    term1 = np.log(_ts_rank(returns, window=WINDOW))
+    # 注意: 与常数的相关性将返回NaN
+    term2 = np.abs(_ts_corr(avg_volume_7, const_series, window=WINDOW))
+    
+    factor = term1 - term2
+    
+    return normalize_factor(factor)
+
+
+def fct011(df: pd.DataFrame) -> pd.Series:
+    """
+    排名 2 的因子实现。
+    
+    原始公式: mul(abs(log_return), log(_ts_corr(0.880, open)))
+    假设窗口期: 10
+    
+    :param df: 包含 'open', 'close' 列的DataFrame。
+    :return: 计算并标准化后的因子Series。
+    """
+    WINDOW = 10
+    
+    log_return = np.log(df['close'] / df['close'].shift(1))
+    const_series = pd.Series(0.880, index=df.index)
+
+    term1 = np.abs(log_return)
+    # 注意: 与常数的相关性将返回NaN，取对数后仍然是NaN
+    term2 = np.log(_ts_corr(df['open'], const_series, window=WINDOW))
+    
+    factor = term1 * term2
+    
+    return normalize_factor(factor)
+
+
+def fct012(df: pd.DataFrame) -> pd.Series:
+    """
+    排名 3 的因子实现。
+    
+    原始公式: mul(_ts_corr(_ts_rank(sqrt(low)), _ts_rank(neg(open))), abs(log_return))
+    假设窗口期: 10
+    
+    :param df: 包含 'low', 'open', 'close' 列的DataFrame。
+    :return: 计算并标准化后的因子Series。
+    """
+    WINDOW = 10
+    
+    log_return = np.abs(np.log(df['close'] / df['close'].shift(1)))
+    
+    ts_rank_low = _ts_rank(np.sqrt(df['low']), window=WINDOW)
+    ts_rank_open_neg = _ts_rank(-df['open'], window=WINDOW)
+    
+    corr_term = _ts_corr(ts_rank_low, ts_rank_open_neg, window=WINDOW)
+    
+    factor = corr_term * log_return
+    
+    return normalize_factor(factor)
+
+
+def fct013(df: pd.DataFrame) -> pd.Series:
+    """
+    排名 4 的因子实现。
+    
+    原始公式: div(avg_volume_20, avg_volume_20)
+    
+    :param df: 包含 'volume' 列的DataFrame。
+    :return: 计算并标准化后的因子Series。
+    """
+    avg_volume_20 = df['volume'].rolling(window=20).mean()
+    
+    # 这个因子在avg_volume_20非零的地方等于1，否则为NaN。
+    # 这是一个几乎没有信息的因子。
+    factor = avg_volume_20 / avg_volume_20
+    
+    # 结果将是全为0的Series，因为标准化后常数序列的标准差为0。
+    return normalize_factor(factor)
+
+
+def fct014(df: pd.DataFrame) -> pd.Series:
+    """
+    排名 5 的因子实现。
+    
+    原始公式: mul(abs(log_return), _ts_corr(_ts_rank(close), _ts_corr(0.326, log_return)))
+    假设窗口期: 10
+    
+    :param df: 包含 'close' 列的DataFrame。
+    :return: 计算并标准化后的因子Series。
+    """
+    WINDOW = 10
+    
+    log_return = np.log(df['close'] / df['close'].shift(1))
+    const_series = pd.Series(0.326, index=df.index)
+    
+    term1 = np.abs(log_return)
+    
+    # 内部相关性: 与常数相关，返回NaN
+    inner_corr = _ts_corr(log_return, const_series, window=WINDOW)
+    
+    ts_rank_close = _ts_rank(df['close'], window=WINDOW)
+    
+    # 外部相关性: 与一个NaN序列相关，同样返回NaN
+    outer_corr = _ts_corr(ts_rank_close, inner_corr, window=WINDOW)
+    
+    factor = term1 * outer_corr
+    
+    return normalize_factor(factor)
+
     
     return normalize_factor(factor.rolling(window=window).mean())
 def calculate_reversal_factor_with_trend_filter(series: pd.DataFrame, 
@@ -419,9 +782,9 @@ def calculate_reversal_factor_with_trend_filter(series: pd.DataFrame,
 
 def calculate_optimized_position_v2(
     df: pd.DataFrame, 
-    fast_window: int = 10, #sensitivity to short-term trends
-    slow_window: int = 80, 
-    vol_window: int = 120,
+    fast_window: int = 24, #sensitivity to short-term trends
+    slow_window: int = 7*24, 
+    vol_window: int = 90*24,
     max_leverage: float = 1.5,
     strategy: str = 'risk_averse' # Options: 'risk_averse', 'trend_acceleration', 'regime_filter'
 ) -> pd.Series:
@@ -535,7 +898,7 @@ def factor_volume_weighted_reversion(df: pd.DataFrame, period: int = 14) -> pd.S
     return norm_rsi_v
 
 
-def calculate_vwap_rank_zscore(series: pd.DataFrame, window: int = 60) -> pd.Series:
+def calculate_vwap_rank_zscore(series: pd.DataFrame, window: int = 180) -> pd.Series:
     """
     计算 zscore(-1 * rank(close - vwap)) 因子
 
@@ -558,9 +921,8 @@ def calculate_vwap_rank_zscore(series: pd.DataFrame, window: int = 60) -> pd.Ser
     rank = diff.rolling(window).apply(lambda x: pd.Series(x).rank().iloc[-1], raw=False)
 
     # 取负并 zscore 标准化
-    neg_rank = -rank
-    zscore = (neg_rank - neg_rank.rolling(window).mean()) / (neg_rank.rolling(window).std(ddof=1) + 1e-9)
-    fct = normalize_factor(zscore).where(zscore >2, 0)
+    # neg_rank = rank
+    fct = normalize_factor(rank)
     return fct
 def factor_vol_adj_momentum(df: pd.DataFrame, n: int = 20) -> pd.Series:
     """
@@ -613,7 +975,7 @@ def calculate_momentum(series: pd.Series, period: int = 10, window: int = 100, t
 
 
 
-def factor_bollinger_power(df: pd.DataFrame, n: int = 20, k: float = 2.0) -> pd.DataFrame:
+def factor_bollinger_power(df: pd.DataFrame, n: int = 120*24, k: float = 3.0) -> pd.DataFrame:
     """
     计算布林带力量反转因子
     
@@ -630,8 +992,7 @@ def factor_bollinger_power(df: pd.DataFrame, n: int = 20, k: float = 2.0) -> pd.
     # 标准化价格与中轨的距离
     fct = normalize_factor((df_factor['close'] - sma) / (k * stddev + 1e-9))
     
-    position = fct.where(fct.abs() > 2.8, 0)  # 只保留高置信度信号
-    return position
+    return fct 
 
 # --- 2. 创建一个通用的因子添加函数 ---
 
@@ -682,11 +1043,11 @@ import numpy as np
 
 def calculate_multi_period_momentum_filter_hourly(
     series: pd.DataFrame,
-    short_window: int = 72,       # 短期动能均线 (约3天)
-    medium_window: int = 168,     # 中期动能均线 (约7天)
-    long_window: int = 720 * 6,       # 长期趋势过滤均线 (关键, 约180天)
+    short_window: int = 3*24,       # 短期动能均线 (约3天)
+    medium_window: int = 7*24,     # 中期动能均线 (约7天)
+    long_window: int = 120*24,       # 长期趋势过滤均线 (关键, 约180天)
     adx_window: int = 20,         # ADX周期 (略微加长以平滑小时线噪音)
-    adx_threshold: int = 28,      # 更严格的ADX阈值，过滤掉弱趋势
+    adx_threshold: int = 8,      # 更严格的ADX阈值，过滤掉弱趋势
     atr_window: int = 20,         # ATR波动率计算周期
     volatility_threshold: float = 2.5 # 波动率过滤阈值
 ) -> pd.Series:
@@ -746,9 +1107,9 @@ def calculate_multi_period_momentum_filter_hourly(
     position.loc[can_go_short] = np.tanh(scaled_signal[can_go_short])  # 做空时取负值
 
     # 对最终仓位进行轻微平滑，防止信号过于频繁地在0和非0之间跳动
-    final_position = position.where(position.abs() > 0.1, 0)  # 只保留绝对值大于0.1的信号
+    #final_position = position.where(position.abs() > 0.1, 0)  # 只保留绝对值大于0.1的信号
 
-    return final_position
+    return position
 
 
 def generate_signals_with_threshold(factor_series: pd.Series, long_threshold: float, short_threshold: float, is_reversal: bool = False) -> pd.Series:
@@ -1029,23 +1390,23 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     df['log_return'] = np.log(df['close'] / df['close'].shift(1))
     
     # 计算波动率（例如，过去20天的日收益率标准差）
-    df['volatility'] = df['log_return'].rolling(window=20).std()
+    df['volatility'] = df['log_return'].rolling(window=20*24).std()
     
     # 计算平均成交量
-    df['avg_volume_20'] = df['volume'].rolling(window=20).std()
+    df['avg_volume_20'] = df['volume'].rolling(window=20*24).std()
 
-    df['avg_volume_7'] = df['volume'].rolling(window=7).std()
+    df['avg_volume_7'] = df['volume'].rolling(window=7*24).std()
 
     df["returns"] = df["close"].pct_change().fillna(0)
 
     df['vwap'] = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
 
-    df["returns_7_std"] = df["returns"].rolling(window=7).std()
-    df["returns_20_std"] = df["returns"].rolling(window=20).std()
+    df["returns_7_std"] = df["returns"].rolling(window=7*24).std()
+    df["returns_20_std"] = df["returns"].rolling(window=20*24).std()
 
-    df["trades_std"] = df['number of trades'].rolling(window=20).std()
+    df["trades_std"] = df['number of trades'].rolling(window=20*24).std()
     
-    df = df.loc[df.index > pd.Timestamp("2020-11-01").tz_localize("UTC")]
+    df = df.loc[df.index > pd.Timestamp("2020-10-01").tz_localize("UTC")]
     df.dropna(inplace=True)
     return df
 
@@ -1094,6 +1455,11 @@ def calculate_volatility_zscore(
 
     return zscore_factor
 
+
+
+
+def gelu(x: pd.Series) -> pd.Series:
+    return 0.5 * x * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x ** 3)))
 # class Alphas:
 #     """
 #     实现 WorldQuant 101 Alphas，并提供可选的因子标准化功能。
@@ -1185,7 +1551,7 @@ def calculate_volatility_zscore(
 #         return series.rolling(window).apply(np.argmax, raw=True)
 #     def _signed_power(self, series: pd.Series, power: float) -> pd.Series:
 #         return np.sign(series) * (np.abs(series) ** power)
-#     def ts_rank(self, series: pd.Series, window: int) -> pd.Series:
+#     def _ts_rank(self, series: pd.Series, window: int) -> pd.Series:
 #         def rank_last(window_data):
 #             return pd.Series(window_data).rank(pct=True).iloc[-1]
 #         return series.rolling(window).apply(rank_last, raw=False)
@@ -1234,7 +1600,7 @@ def calculate_volatility_zscore(
 #         Alpha#4: (-1 * Ts_Rank(rank(low), 9))
 #         """
 #         ranked_low = self._rank(self.low)
-#         raw_alpha = self.ts_rank(ranked_low, 9) * -1
+#         raw_alpha = self._ts_rank(ranked_low, 9) * -1
         
 #         return self._finalize_alpha(raw_alpha)
         

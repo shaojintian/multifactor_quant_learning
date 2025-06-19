@@ -42,7 +42,11 @@ from calculate_net_vaules import *
 # from verify_risk_orthogonalization import risk_orthogonalization # 不再需要风险正交
 pd.plotting.register_matplotlib_converters()
 from factor_generator import *
-from combine_factor import _compute_rolling_combined_score
+from combine_factor import _compute_rolling_combined_score, _compute_rolling_sortino
+
+
+
+
 
 
 # %%
@@ -82,7 +86,7 @@ print(df.head())
 # 我们的目标(y)是预测 *未来* 的收益率。这里我们用下一期的对数收益率作为目标。
 # shift(-1) 表示将未来的值移动到当前行
 #df['target'] = df['log_return'].shift(-1)
-df['target'] = _compute_rolling_combined_score(df["returns"].shift(-1), window=100)  # 使用未来收益率计算滚动评分
+df['target'] = _compute_rolling_sortino(df["returns"].shift(-1), window=7*24)  # 使用未来收益率计算滚动评分
 
 # 删除最后一行，因为它的 'target' 是 NaN
 df.dropna(inplace=True)
@@ -120,7 +124,7 @@ def _ts_rank(x):
     return s.rolling(window).apply(lambda w: w.rank(pct=True).iloc[-1], raw=False).fillna(0).values
 
 def _ts_std(x):
-    window=7
+    window=7*24
     s = pd.Series(x)
     return s.rolling(window).std().fillna(0).values
 
@@ -132,15 +136,21 @@ def _ts_delay(x):
 
 # 这个函数需要2个参数 (x1, x2)
 def _ts_corr(x1, x2):
-    window=10
+    window=7*24
     s1 = pd.Series(x1)
     s2 = pd.Series(x2)
     return s1.rolling(window).corr(s2).fillna(0).values
+
+def _ts_skewness(x):
+    p = pd.Series(x)
+    window = 7*24
+    return p.rolling(window).skew().fillna(0).values
 
 # --- 包装函数，确保 arity 值完全正确 ---
 # arity=2 用于需要两个输入的函数
 protected_division = make_function(function=_protected_division, name='div', arity=2)
 ts_corr = make_function(function=_ts_corr, name='ts_corr', arity=2)
+ts_skewness = make_function(function=_ts_skewness,name="ts_skewness",arity=1)
 
 # arity=1 用于需要一个输入的函数
 ts_rank = make_function(function=_ts_rank, name='ts_rank', arity=1)
@@ -150,7 +160,7 @@ ts_std = make_function(function=_ts_std, name='ts_std', arity=1)
 # 创建函数集
 user_function_set = [
     protected_division, 'add', 'sub', 'mul', 'neg', 'log', 'sqrt', 'abs',
-    ts_rank, ts_delay, ts_corr,ts_std
+    ts_rank, ts_delay, ts_corr,ts_std,ts_skewness
 ]
 
 
