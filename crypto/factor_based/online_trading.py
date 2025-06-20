@@ -41,11 +41,10 @@ csv_path = 'data/crypto/ethusdt_60m.csv'
 coin = "eth"
 period_minutes = 60
 
-api_key = "你的API_KEY"
-api_secret = "你的API_SECRET"
-client = Client(api_key, api_secret)
+api_key = "pJAzMTnYORJU1ze6rDXkmR8RzDknYstsgbn9ZaHHdXw1cvcZEPjTLfPP0aGJnUFM"
+api_secret = "rspRmZWi9WwBIu5EJXdtBWcwCCKzkSzk0rA44JxZVqsZrpou2TuLtBSXCfVsWZSu"
 
-symbol = "ETHUSDT"
+SYMBOL = "ETHUSDT"
 
 
 def on_message(ws, message):
@@ -87,7 +86,7 @@ def on_message(ws, message):
     execute_trade(position)
 
 def on_error(ws, error):
-    print("WebSocket error:", error)
+    logger.info("WebSocket error:", error)
 
 def on_close(ws, close_status_code, close_msg):
     print(f"WebSocket closed with code: {close_status_code}, message: {close_msg}")
@@ -149,22 +148,61 @@ def generate_signal(df: pd.DataFrame):
     return latest_signal
 
 
+def get_current_position(symbol="BTCUSDT"):
+    pos = client.futures_position_information(symbol=symbol)[0]
+    amt = float(pos["positionAmt"])
+    price = float(client.futures_mark_price(symbol=symbol)["markPrice"])
+    balance = float(client.futures_account_balance()[0]["balance"])
+    notional = amt * price
+    return notional / balance if balance else 0.0
+
+# 下市价单（按目标调整）
+def place_order(side, notional, symbol):
+    price = float(client.futures_symbol_ticker(symbol=symbol)["price"])
+    quantity = round(notional / price, 3)  # 精度视币种而定
+    order = client.futures_create_order(
+        symbol=symbol,
+        side=SIDE_BUY if side == "buy" else SIDE_SELL,
+        type=ORDER_TYPE_MARKET,
+        quantity=quantity
+    )
+    logger.info(f"下单成功：{side} {quantity}张，notional={notional}")
+
 
 def execute_trade(target_position):
-    current = get_current_position()
+    current = get_current_position(symbol=SYMBOL)
     delta = target_position - current
     logger.info(f"目标仓位: {target_position:.2f}，当前仓位: {current:.2f}，需要调整: {delta:.2f}")
 
-    threshold = 0.1
+    threshold = 0.2
     if abs(delta) < threshold:
-        print("调整幅度过小，跳过交易")
+        logger.info("调整幅度过小，跳过交易")
         return
 
     side = "buy" if delta > 0 else "sell"
-    place_order(side, abs(delta) * 100)  # 100 是你账户的初始净值或资金基准
+    #place_order(side, abs(delta) * 100,SYMBOL)  # 100 是你账户的初始净值或资金基准
 
 
     # 可扩展推送逻辑，如：
     # send_signal_to_bot(latest_signal)
+from binance.exceptions import BinanceAPIException
+import ccxt
 if __name__ == "__main__":
+    binance = ccxt.binance({
+    'apiKey': "pJAzMTnYORJU1ze6rDXkmR8RzDknYstsgbn9ZaHHdXw1cvcZEPjTLfPP0aGJnUFM",
+    'secret': "rspRmZWi9WwBIu5EJXdtBWcwCCKzkSzk0rA44JxZVqsZrpou2TuLtBSXCfVsWZSu",
+    'enableRateLimit': True,
+    'options': {
+        'defaultType': 'future',  # 表示使用 Binance Futures (USDT 永续)
+    }
+    })
+
+    try:
+        balance = binance.fetch_balance()
+        print("连接成功 ✅")
+        print("账户余额（USDT）:", balance['total']['USDT'])
+    except ccxt.BaseError as e:
+        raise(f"连接失败 {e}")
+    
+    print(get_current_position(symbol=SYMBOL))
     run_websocket()
