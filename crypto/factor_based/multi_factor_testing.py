@@ -88,11 +88,11 @@ final_frame = add_factor(
 )
 final_frame = add_factor(
     final_frame, 
-    factor_logic_func=fct004 , 
+    factor_logic_func=greed_factor , 
 )
 final_frame = add_factor(
     final_frame,    
-    factor_logic_func=fct012 ,
+    factor_logic_func=fct001 ,
 )
 final_frame = add_factor(
     final_frame,
@@ -111,13 +111,13 @@ final_frame = add_factor(
 
 final_frame = add_factor(
     final_frame, 
-    factor_logic_func=factor_bollinger_power
+    factor_logic_func=fear_factor
 )
 # single_factor = volatility_factor
 # single_factor = adaptive_momentum_factor
 
 print("\n--- 多因子组合 ---",final_frame.columns[-6:])
-final_factor = combine_factors_lightgbm(final_frame, factor_cols=["fct001","calculate_ma"],weights=[0.8,0.2])
+final_factor = combine_factors_lightgbm(final_frame, factor_cols=["calculate_ma","greed_factor"],weights=[0.8,0.2])
 # final_factor = combine_factors_linear(final_frame, factor_cols=final_frame.columns[-6:],weights=[0.2,0.2,0.2,0.2,0.2,0.2]) 
 #final_factor = alphas.alpha004()  # 选择 Alpha#101 作为单因子
 print("\n--- 原始多因子统计 ---")

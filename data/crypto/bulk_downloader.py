@@ -116,7 +116,8 @@ class BinanceBulkDownloader:
         data_frequency="1m",
         asset="um",
         timeperiod_per_file="daily",
-        start_date="2024-11"
+        start_date="2024-11",
+        lable=None
     ) -> None:
         """
         :param destination_dir: Destination directory for downloaded files
@@ -134,6 +135,7 @@ class BinanceBulkDownloader:
         self.is_truncated = True
         self.downloaded_list = []
         self.start_date = start_date  # 新增的参数，用于指定起始日期
+        self.lable = lable
 
     def _check_params(self) -> None:
         """
@@ -199,7 +201,7 @@ class BinanceBulkDownloader:
             "{http://s3.amazonaws.com/doc/2006-03-01/}Contents"
         ):
             key = content.find("{http://s3.amazonaws.com/doc/2006-03-01/}Key").text
-            if key.endswith(".zip"):
+            if key.endswith(".zip")and (self.lable is None or key.split("/")[-1].startswith(self.lable)):
                 # # 如果指定了起始日期，过滤掉起始日期之前的文件
                 # if self.start_date and self._is_after_start_date(key):
                 #     files.append(key)

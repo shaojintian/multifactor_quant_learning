@@ -31,7 +31,7 @@ def ofi(z:pd.DataFrame,n:int = 3) -> pd.Series:
 
     iof = delta_bid_v - delta_ask_v
 
-    return ofi
+    return iof.fillna(0)
 
 # ---------------------------主动大单成交-------------------------------
 # 向量形式写的
@@ -107,3 +107,31 @@ def ic(x:pd.Series, z:pd.DataFrame) -> None:
     '''ic decay for return'''
     ic_values = pd.Series({n*5:np.corrcoef(x.values,z[f'y{n*5}'].values)[0,1]  for n in range(1,61)})
     return ic_values
+
+
+if __name__ == "__main__":
+    # --- 模拟生成一份微观数据 ---
+    # 时间跨度为几个小时，频率为亚秒级
+    time_index = pd.to_datetime(pd.date_range(start='2023-10-27 09:00:00', end='2023-10-27 12:00:00', freq='200L')) # 200毫秒
+    df_micro = pd.DataFrame(index=time_index)
+    df_micro.index.name = 'timestamp'
+
+    # 交易数据
+    df_micro['price'] = 29000 + np.random.randn(len(df_micro)).cumsum() * 0.1
+    df_micro['volume'] = np.random.rand(len(df_micro)) * 0.5 + 0.01
+    df_micro['side'] = np.random.choice(['buy', 'sell'], size=len(df_micro), p=[0.55, 0.45])
+
+    # 订单薄数据
+    spread = 0.1
+    df_micro['bp1'] = df_micro['price']
+    df_micro['ap1'] = df_micro['price'] + spread
+    df_micro['bv1'] = np.random.uniform(5, 15, size=len(df_micro))
+    df_micro['av1'] = np.random.uniform(5, 15, size=len(df_micro))
+    df_micro['spread'] = df_micro['ap1'] - df_micro['bp1']
+
+    # 假设OFI已经计算好 (在实际应用中，你需要先调用ofi函数)
+    df_micro['ofi'] = ofi(df_micro)
+
+    print("原始微观数据 (前几行):")
+    print(df_micro.head())
+

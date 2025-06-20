@@ -81,7 +81,7 @@ print(ret.describe())
 #alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
     filtered_df, 
-    factor_logic_func= fct001
+    factor_logic_func= calculate_ma
 
 )
 print(final_frame.columns)
@@ -174,9 +174,11 @@ print(f"最大回撤 (Max Drawdown): {max_drawdown:.2%}")
 
 turnover = cal_turnover_annual(final_factor)
 
-print(f"年化换手率 (Annualized Turnover): {turnover:.2%}")
+#print(f"年化换手率 (Annualized Turnover): {turnover:.2%}")
 
 calmar = calculate_calmar_ratio(net_values)
+
+print(f"calmar {calmar:.2f}")
 
 # 图上方显示夏普率
 plt.figtext(0.5, 0.95, f"Annualized Sharpe Ratio: {sharp:.4f}", ha="center", fontsize=12, color="blue")

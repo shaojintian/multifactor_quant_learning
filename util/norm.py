@@ -6,36 +6,26 @@ import numpy as np
 import pandas as pd
 
 def normalize_factor(factor: pd.Series, window: int = 2000) -> pd.Series:
-    """
-    Normalize the factor using rolling mean and standard deviation or global mean and std if the sample size is small.
-
-    Parameters:
-    -----------
-    factor: pd.Series
-        The factor values to normalize.
-    window: int
-        The rolling window size.
-
-    Returns:
-    --------
-    pd.Series
-        The normalized factor values.
-    """
-    # Check the length of the factor series
     if len(factor) < window:
-         # 方法2：基于百分位数的缩放
-        upper = factor.quantile(0.9973)  # 3σ对应的概率约为99.73%
+        upper = factor.quantile(0.9973)
         lower = factor.quantile(0.0027)
         _factor = 6 * (factor - lower) / (upper - lower) - 3
         _factor = _factor.clip(-3, 3)
     else:
-        # Use rolling mean and std
-        _factor = ((factor - factor.rolling(window=window).mean()) / (factor.rolling(window=window).std() + 1e-9)).clip(-3,3)
+        mean_ewm = factor.ewm(span=window, adjust=False).mean()
+        std_ewm = factor.ewm(span=window, adjust=False).std()
+        _factor = ((factor - mean_ewm) / (std_ewm + 1e-9)).clip(-3, 3)
 
-    fct = _factor.fillna(0).where(lambda x: np.abs(x) >=0.1, 0).round(4)
-    fct = np.tanh(fct/3)*3  # 使用tanh函数将值映射到[-1, 1]区间
-    #print(_factor.describe())
-    return fct # 将小于3的值设为0
+
+    # # 过滤微弱信号（阈值可调）
+    # threshold = 1.5
+    # fct = _factor.fillna(0).where(lambda x: np.abs(x) >= threshold, 0)
+
+    # 再用tanh缩放，收敛到[-1,1]
+    fct = np.tanh(_factor / 3) * 3
+
+    return fct.round(4)
+
 
 
 def normalize_factor_quantile_discrete_vectorized(

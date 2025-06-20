@@ -2,18 +2,311 @@ from typing import Optional
 import pandas as pd
 import numpy as np
 from util.norm import *
-
+from optimize_hopt import optimize_with_optuna
+from hft_factor.tick_features import ofi
 # --- 1. 定义各种因子的计算逻辑 (作为独立的函数) ---
 
-#1.1trend vol AS0.77
+#1.1trend vol AS 1.2
 #你可以用n个周期后的ret作为label，还可以再雕琢一下，用n个周期后不高于/不低于某个价格位置作为label
-# filter 震荡市
+# filter 震荡市 
 def calculate_ma(series: pd.Series, window: int = 20*24) -> pd.Series:
     """计算简单移动平均线"""
     fct = normalize_factor(series["close"].rolling(window=window).mean().ewm(span=5*24).mean())
 
     position = np.tanh(fct) * 1.5 # 平滑压缩为 [-1.5, 1.5]
     return position  # 将0值替换为NaN 0.8
+
+
+def calculate_hourly_ofi(df: pd.DataFrame) -> pd.Series:
+    """
+    计算tick数据的OFI，并将其重采样为小时级别的累加信号。
+    
+    Args:
+        df (pd.DataFrame): 包含tick数据的DataFrame。
+                           必须有DatetimeIndex和'bp1', 'bv1', 'ap1', 'av1'列。
+
+    Returns:
+        pd.Series: 每小时累加的OFI信号。
+    """
+    # 1. 确保df有DatetimeIndex
+    if not isinstance(df.index, pd.DatetimeIndex):
+        raise TypeError("DataFrame的索引必须是DatetimeIndex类型。")
+        
+    # 2. 计算每个tick的OFI
+    tick_ofi = ofi(df)
+    
+    # 3. 按小时('H')重采样，并对每小时内的OFI值进行求和
+    hourly_ofi = tick_ofi.resample('H').sum()
+    
+    # 为了结果清晰，可以将没有数据的时段产生的NaN值填充为0
+    hourly_ofi = hourly_ofi.fillna(0)
+    
+    hourly_ofi.name = 'hourly_ofi' # 给Series一个名字
+    
+    return hourly_ofi
+
+def calculate_ema_decay(df :pd.DataFrame, span: int = 12*24) -> pd.Series:
+    """
+    使用指数移动平均（EMA）实现更快的衰减。
+    衰减速度由 span 参数控制，span 越小，衰减越快，信号越灵敏。
+    """
+    # 1. 直接在价格上计算一个EMA
+    ema_fast = df["close"].ewm(span=span, adjust=False).mean()
+    
+    # 2. 对这个EMA进行标准化
+    # 使用与span相同的lookback周期进行标准化
+    fct = normalize_factor(ema_fast)
+    
+    # 3. 生成仓位信号
+    position = np.tanh(fct) * 1.5
+    return position
+
+
+@optimize_with_optuna
+def calc_pin_bar_reversal_factor(df: pd.DataFrame, 
+                                 atr_period: int = 13,
+                                 vol_multiplier: float = 0.3,
+                                 body_ratio_max: float = 0.65,
+                                 min_lower_shadow_ratio: float = 0.1,
+                                 **kwargs) -> pd.Series:
+    """
+    计算 "高波动插针快速反弹" 因子 (Bullish Pin Bar / Hammer)
+
+    因子逻辑：
+    寻找具有长下影线、小实体且收盘价靠近最高价的K线。
+    这种形态通常预示着下跌动能衰竭和潜在的价格反弹。
+    因子值的大小代表了该Pin Bar形态的强度。
+
+    参数:
+    - df (pd.DataFrame): 包含'open', 'high', 'low', 'close'列的DataFrame。
+                         索引应为时间序列。
+    - atr_period (int): 计算ATR（平均真实波幅）的周期，用于波动性过滤。
+    - vol_multiplier (float): 波动性过滤阈值。K线总振幅需大于 (ATR * vol_multiplier)。
+    - body_ratio_max (float): K线实体与总振幅的最大比例。值越小，要求实体越小。
+    - min_lower_shadow_ratio (float): 下影线与总振幅的最小比例。值越大，要求下影线越长。
+
+    返回:
+    - pd.Series: 因子值序列。值越高，看涨反转信号越强。
+    """
+    # 确保列名是小写
+    df_ = df.copy()
+    df_.columns = [x.lower() for x in df_.columns]
+
+    # --- 1. 计算K线基本组件 ---
+    total_range = df_['high'] - df_['low']
+    body_size = abs(df_['close'] - df_['open'])
+    
+    # 防止除以零
+    total_range[total_range < 1e-10] = np.nan # 用nan标记无效K线
+
+    lower_shadow = np.minimum(df_['open'], df_['close']) - df_['low']
+    upper_shadow = df_['high'] - np.maximum(df_['open'], df_['close'])
+
+    # --- 2. 计算平均真实波幅 (ATR) 作为波动性基准 ---
+    # 使用pandas手动计算ATR，避免引入额外依赖
+    high_low = df_['high'] - df_['low']
+    high_close = abs(df_['high'] - df_['close'].shift(1))
+    low_close = abs(df_['low'] - df_['close'].shift(1))
+    
+    tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+    atr = tr.ewm(alpha=1/atr_period, adjust=False).mean()
+
+    # --- 3. 定义筛选条件 (布尔掩码) ---
+    
+    # 条件1: 高波动 - K线振幅必须足够大
+    is_volatile = total_range > atr * vol_multiplier
+
+    # 条件2: 实体小 - 实体大小占总振幅的比例要小
+    is_small_body = (body_size / total_range) < body_ratio_max
+
+    # 条件3: 长下影线 - 下影线必须是K线的主要组成部分
+    is_long_lower_shadow = (lower_shadow / total_range) > min_lower_shadow_ratio
+    
+    # 结合所有条件，筛选出符合条件的Pin Bar
+    is_pin_bar = is_volatile & is_small_body & is_long_lower_shadow
+
+    # --- 4. 计算因子分值 ---
+    # 因子分值可以由下影线比例和(1 - 上影线比例)组合而成
+    # 这样下影线越长、上影线越短，得分越高
+    # 我们只在符合条件的K线上计算分值
+    
+    # 分数 = (下影线长度 / 总振幅) * (1 - 上影线长度 / 总振幅)
+    # 这个公式确保了下影线长和上影线短的K线获得高分
+    score = (lower_shadow / total_range) * (1 - (upper_shadow / total_range))
+    
+    # 应用筛选条件，不符合的K线因子值为0
+    factor = score.where(is_pin_bar, 0)
+    
+    # 结果命名
+    factor.name = 'pin_bar_reversal_factor'
+    
+    # 填充初始NaN值
+    factor = factor.fillna(0)
+
+    return factor
+
+# @optimize_with_optuna
+def fear_factor(df: pd.DataFrame, window: int = 12) -> pd.Series:
+    """
+    恐惧因子（小时）。
+    量化市场的恐慌情绪。通常在价格急跌、波动放大的小时内升高。
+    实现：(最高价 - 最低价) / 收盘价 * (收盘价 < 开盘价时的成交量)
+    
+    :param df: 小时频率的 OHLCV DataFrame
+    :param window: 平滑窗口期（小时数），默认12小时
+    :return: 恐惧因子的 Series
+    """
+    # 当小时波动率
+    hourly_volatility = (df['high'] - df['low']) / df['close']
+    
+    # 是否是下跌小时
+    is_down_hour = (df['close'] < df['open']).astype(int)
+    
+    # 恐惧指标 = 波动率 * 下跌小时的成交量
+    fear_indicator = hourly_volatility * df['volume'] * is_down_hour
+    
+    fear_indicator = fear_indicator.rolling(window=window, min_periods=1).mean()
+    # 使用移动平均使其更稳定
+    return normalize_factor(fear_indicator)
+
+
+def greed_factor(df: pd.DataFrame, window: int = 12) -> pd.Series:
+    """
+    贪婪因子（小时）。
+    量化市场的贪婪或狂热情绪。通常在价格连续上涨的小时内升高。
+    实现：过去N小时上涨小时数的比例 * 同期平均成交量
+    
+    :param df: 小时频率的 OHLCV DataFrame
+    :param window: 回看窗口期（小时数），默认12小时
+    :return: 贪婪因子的 Series
+    """
+    # 是否是上涨小时
+    is_up_hour = (df['close'] > df['open']).astype(int)
+    
+    # 过去N小时上涨小时数比例
+    up_hour_ratio = is_up_hour.rolling(window=window, min_periods=1).sum() / window
+    
+    # 过去N小时平均成交量
+    avg_volume = df['volume'].rolling(window=window, min_periods=1).mean()
+    
+    # 贪婪因子 = 上涨比例 * 平均成交量
+    greed_indicator = up_hour_ratio * avg_volume
+    
+    return normalize_factor(greed_indicator)
+
+def laziness_factor(df: pd.DataFrame, window: int = 24) -> pd.Series:
+    """
+    懒惰因子 (或称“波动收缩”因子，小时)。
+    量化市场的低迷或横盘状态。表现为低波动率和低成交量。
+    因子值越高，市场越“懒惰”，可能预示着突破。
+    
+    :param df: 小时频率的 OHLCV DataFrame
+    :param window: 回看窗口期（小时数），默认24小时
+    :return: 懒惰因子的 Series
+    """
+    # 小时真实波幅均值 (ATR)
+    tr = pd.concat([
+        df['high'] - df['low'],
+        abs(df['high'] - df['close'].shift()),
+        abs(df['low'] - df['close'].shift())
+    ], axis=1).max(axis=1)
+    atr = tr.rolling(window=window).mean()
+    
+    # 小时成交量均值
+    avg_volume = df['volume'].rolling(window=window).mean()
+    
+    # 将波动率和成交量归一化（用rolling rank），然后取其倒数
+    atr_rank = atr.rolling(window=window*2).apply(lambda x: x.rank(pct=True).iloc[-1])
+    vol_rank = avg_volume.rolling(window=window*2).apply(lambda x: x.rank(pct=True).iloc[-1])
+    
+    # 懒惰 = 1 - (波动排名 + 成交量排名) / 2
+    laziness = 1 - (atr_rank + vol_rank) / 2
+    return laziness
+
+
+def jealousy_factor(df: pd.DataFrame, short_window: int = 6, long_window: int = 24) -> pd.Series:
+    """
+    嫉妒/羡慕因子 (FOMO 因子，小时)。
+    量化价格加速上涨的动能，捕捉追涨情绪。
+    实现：短期动能与长期动能的差值的变化率（动能的加速度）。
+    
+    :param df: 小时频率的 OHLCV DataFrame
+    :param short_window: 短期动能窗口（小时数），默认6小时
+    :param long_window: 长期动能窗口（小时数），默认24小时
+    :return: 嫉妒因子的 Series
+    """
+    roc_short = df['close'].pct_change(short_window)
+    roc_long = df['close'].pct_change(long_window)
+    
+    momentum_diff = roc_short - roc_long
+    jealousy = momentum_diff.diff() # 动能的加速度
+    
+    return jealousy
+
+
+def counter_humanity_factor(df: pd.DataFrame, window: int = 12, cool_down: int = 3) -> pd.Series:
+    """
+    逆人性因子 (恐慌后买入，小时)。
+    当恐惧因子达到高点后，等待市场稍微冷静（波动减小）的几小时后买入。
+    
+    :param df: 小时频率的 OHLCV DataFrame
+    :param fear_window: 计算恐惧因子的窗口（小时数）
+    :param cool_down: 恐慌后的冷静期（小时数）
+    :return: 逆人性因子的 Series (信号为1，否则为0)
+    """
+    f_factor = fear_factor(df, window=window)
+    is_peak_fear = f_factor == f_factor.rolling(window=cool_down).max()
+    
+    hourly_volatility = (df['high'] - df['low']) / df['close']
+    is_cooling_down = hourly_volatility < hourly_volatility.rolling(window=cool_down).mean()
+    
+    signal = (is_peak_fear.shift(1) & is_cooling_down).astype(int)
+    return normalize_factor(signal)
+
+
+def integer_factor(df: pd.DataFrame, round_base: int = 10) -> pd.Series:
+    """
+    整数关口因子。
+    量化价格距离某个整数倍数（如10, 100）的接近程度。
+    
+    :param df: OHLCV DataFrame
+    :param round_base: 整数关口的基数，例如 10, 50, 100
+    :return: 整数因子的 Series
+    """
+    distance_to_round = np.abs(df['close'] - round(df['close'] / round_base) * round_base)
+    proximity = -1 / (1 + distance_to_round)
+    
+    return normalize_factor(proximity)
+
+
+
+def calculate_cosine_decay(df: pd.DataFrame, window: int = 12*24) -> pd.Series:
+    """
+    使用余弦衰减权重计算移动平均，实现快速且平滑的衰减。
+    最近的点的权重最高，然后按余弦曲线下降。
+    """
+    # 1. 创建余弦权重
+    cosine_weights = (1 + np.cos(np.linspace(0, np.pi, window))) / 2
+    
+    # 定义一个加权函数，用于 rolling().apply()
+    def weighted_average(x):
+        return np.dot(x, cosine_weights) / cosine_weights.sum()
+
+    # 2. 使用 rolling().apply() 计算余弦加权移动平均
+    # raw=True 使得传递给函数的是NumPy数组，速度更快
+    # min_periods=window 确保只有在窗口满时才计算，避免初始不稳定的值
+    cosine_ma = df['close'].rolling(window=window, min_periods=window).apply(weighted_average, raw=True)
+    
+    # 3. 标准化
+    # --- 这是关键的修正 ---
+    # 确保 normalize_factor 返回一个 Series，并显式传递 lookback 周期
+    fct = normalize_factor(cosine_ma)
+    
+    # 4. 生成仓位信号
+    position = np.tanh(fct) * 1.5
+    
+    # 5. 确保返回的是一个Series
+    return position
 
 def fct001(df: pd.DataFrame) -> pd.Series:
     """One-liner version of the factor calculation."""
@@ -1408,7 +1701,8 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     df["returns_20_std"] = df["returns"].rolling(window=20*24).std()
 
     df["trades_std"] = df['number of trades'].rolling(window=20*24).std()
-    
+
+    df["target_returns"] =  df["returns"].shift(-1).fillna(0)   
     df = df.loc[df.index > pd.Timestamp("2020-10-01").tz_localize("UTC")]
     df.dropna(inplace=True)
     return df

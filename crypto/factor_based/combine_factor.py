@@ -309,6 +309,7 @@ def combine_factors_lightgbm(df: pd.DataFrame,
 
     combined_factor = normalize_factor(combined_factor)# 确保因子非负
     
+    combined_factor = np.tanh(combined_factor) * 1.5
     return combined_factor
 
 
