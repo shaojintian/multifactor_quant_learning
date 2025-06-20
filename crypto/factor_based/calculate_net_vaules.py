@@ -147,7 +147,7 @@ def cal_net_values_compounded(pos: pd.Series, ret: pd.Series, fee: float = 0.000
     prev_pos = pos.shift(1).fillna(0)
     position_changes = pos - prev_pos
 
-    should_trade = np.abs(position_changes) > 0.5  # boolean mask 0.5
+    should_trade = np.abs(position_changes) > 0.1  # boolean mask 0.5
     
     effective_pos = pos.copy()
     effective_pos = effective_pos.where(should_trade, other=pos.shift(1))

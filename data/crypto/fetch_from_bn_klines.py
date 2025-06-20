@@ -53,8 +53,8 @@ def fetch_all_klines(symbol, interval, start_time, end_time):
     return pd.concat(all_klines, ignore_index=True)
 
 # 示例调用
-symbol = 'BTCUSDT'  # 交易对
-interval = '5m'    # 时间间隔
+symbol = 'SOLUSDT'  # 交易对
+interval = '1h'    # 时间间隔
 start_time = date_to_utc_milliseconds("2020-11-01")  # 起始时间（毫秒）
 end_time = date_to_utc_milliseconds("2025-06-10")    # 结束时间（毫秒）
 
@@ -62,5 +62,5 @@ end_time = date_to_utc_milliseconds("2025-06-10")    # 结束时间（毫秒）
 all_klines_df = fetch_all_klines(symbol, interval, start_time, end_time)
 
 # 保存到CSV文件
-all_klines_df.to_csv(f'data/crypto/btcusdt_{interval}.csv', index=False)
+all_klines_df.to_csv(f'data/crypto/{symbol}_{interval}.csv', index=False)
 print(f"Data fetching complete. length: {len(all_klines_df)}")

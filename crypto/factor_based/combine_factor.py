@@ -323,7 +323,7 @@ def combine_factors_lightgbm(df: pd.DataFrame,
     combined_factor = combined_factor*2
     
     # combined_factor = np.tanh(combined_factor) * 1.5
-    return combined_factor
+    return combined_factor.round(2)
 
 
 

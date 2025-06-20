@@ -43,10 +43,11 @@ logger.setLevel(logging.INFO)
 # 0 data preprocess
 _period_minutes = 60
 _trading_hours = 24
+_coin = "eth"
 # %%
 #1. 读取行情数据
-z = pd.read_csv(f'data/crypto/btcusdt_{_period_minutes}m.csv',index_col=0)
-z.name = f"btcusdt_{_period_minutes}m"
+z = pd.read_csv(f'data/crypto/{_coin}usdt_{_period_minutes}m.csv',index_col=0)
+z.name = f"{_coin}usdt_{_period_minutes}m"
 import datetime
 #date_threshold = datetime.datetime(2020, 2, 1)
 #filtered_df = z[z.index > '2020-01-01']
@@ -150,25 +151,25 @@ final_frame = add_factor(
 final_factor = combine_factors_lightgbm(final_frame, factor_cols=["mean_revert_when_neutral_and_stable","create_trend_following_vol_factor","factor_bollinger_power","calculate_ma","fct001","calculate_optimized_position_v2","greed_factor","calculate_multi_period_momentum_filter_hourly","laziness_factor"],weights=[ 0.359000,0.516833,0.124167])
 # final_factor = combine_factors_linear(final_frame, factor_cols=final_frame.columns[-6:],weights=[0.2,0.2,0.2,0.2,0.2,0.2]) 
 #final_factor = alphas.alpha004()  # 选择 Alpha#101 作为单因子
-print("\n--- 原始多因子统计 ---")
+print("\n--- 多因子统计 ---")
 #print(final_factor.describe())
 
-#final_factor.to_csv('factor_test_data/crypto/final_factor.csv')
+#final_factor.to_csv(f'factor_test_data/crypto/final_factor{_coin}.csv')
 
 
 
 
 
 # %%
-# 6. 可视化处理后的因子分布
-print("\n--- 可视化最终因子分布 ---")
-plt.hist(final_factor.dropna(), bins=50, alpha=0.7, label=final_factor.name)
-plt.title(f"Distribution of Final Factor: {final_factor.name}")
-plt.xlabel("Factor Value")
-plt.ylabel("Frequency")
-plt.legend()
-plt.grid(True)
-plt.show()
+# # 6. 可视化处理后的因子分布
+# print("\n--- 可视化最终因子分布 ---")
+# plt.hist(final_factor.dropna(), bins=50, alpha=0.7, label=final_factor.name)
+# plt.title(f"Distribution of Final Factor: {final_factor.name}")
+# plt.xlabel("Factor Value")
+# plt.ylabel("Frequency")
+# plt.legend()
+# plt.grid(True)
+# plt.show()
 
 
 # %%
@@ -192,7 +193,13 @@ plt.figure(figsize=(12, 6))
 
 
 normalized_close = filtered_df["close"] / filtered_df["close"].iloc[0]  # 归一化收盘价
-plt.plot(filtered_df.index, normalized_close, label="normalized_close")
+
+
+# normalized_close = normalized_close.loc[normalized_close.index > pd.Timestamp("2024-10-01").tz_localize("UTC")]
+# net_values = net_values.loc[net_values.index > pd.Timestamp("2024-10-01").tz_localize("UTC")]
+# net_values_before_rebate = net_values_before_rebate.loc[net_values_before_rebate.index > pd.Timestamp("2024-10-01").tz_localize("UTC")]
+
+plt.plot(normalized_close.index, normalized_close, label="normalized_close")
 # 画净值曲线（考虑手续费）
 plt.plot(net_values.index, net_values.values, label="Net Value (with fee) compounded", linewidth=2)
 #print(net_values)
@@ -255,4 +262,4 @@ plt.figtext(0.5, 0.05, f"annual return: {ar:.2%}", ha="center", fontsize=12, col
 logger.info(f"annual return: {ar:.2%}")
 
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # 预留上下空间避免覆盖
-plt.show()
+#plt.show()
