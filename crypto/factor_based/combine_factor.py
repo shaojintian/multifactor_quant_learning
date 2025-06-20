@@ -307,9 +307,9 @@ def combine_factors_lightgbm(df: pd.DataFrame,
     feature_importances = pd.Series(weights, index=X.columns, name="Feature Importance")
     print("\n模型学习到的特征重要性:\n",feature_importances.sort_values(ascending=False))
 
-    combined_factor = normalize_factor(combined_factor)# 确保因子非负
+    combined_factor = combined_factor
     
-    combined_factor = np.tanh(combined_factor) * 1.5
+    # combined_factor = np.tanh(combined_factor) * 1.5
     return combined_factor
 
 

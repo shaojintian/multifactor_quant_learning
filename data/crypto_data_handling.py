@@ -19,7 +19,7 @@ def convert_column_names_to_lowercase(folder_path):
                     print(f"Failed to process {file_path}: {e}")
 
 # 替换为你的目标路径
-folder_path = '/Users/wanting/Downloads/multifactor_quant_learning/data/futures/um/monthly/klines'
+folder_path = '/Users/wanting/Downloads/multifactor_quant_learning/data/crypto'
 
 
 def concat_files_in_folder(folder_path):
@@ -40,5 +40,5 @@ def concat_files_in_folder(folder_path):
 
 if __name__ == "__main__":
     # 先转换列名为小写
-    #convert_column_names_to_lowercase(folder_path)
-    concat_files_in_folder(folder_path)
+    convert_column_names_to_lowercase(folder_path)
+    #concat_files_in_folder(folder_path)

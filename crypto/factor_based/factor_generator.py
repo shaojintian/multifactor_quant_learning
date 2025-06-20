@@ -3,18 +3,47 @@ import pandas as pd
 import numpy as np
 from util.norm import *
 from optimize_hopt import optimize_with_optuna
-from hft_factor.tick_features import ofi
+from crypto.hft_factor.tick_features import ofi
 # --- 1. 定义各种因子的计算逻辑 (作为独立的函数) ---
 
 #1.1trend vol AS 1.2
 #你可以用n个周期后的ret作为label，还可以再雕琢一下，用n个周期后不高于/不低于某个价格位置作为label
 # filter 震荡市 
-def calculate_ma(series: pd.Series, window: int = 20*24) -> pd.Series:
+def calculate_ma(series: pd.Series, window: int = 20*2) -> pd.Series:
     """计算简单移动平均线"""
     fct = normalize_factor(series["close"].rolling(window=window).mean().ewm(span=5*24).mean())
 
     position = np.tanh(fct) * 1.5 # 平滑压缩为 [-1.5, 1.5]
-    return position  # 将0值替换为NaN 0.8
+    return position.resample("H").mean().dropna()  # 将0值替换为NaN 0.8
+from scipy.stats import linregress
+
+def calculate_ma_trend_based(series: pd.DataFrame, window: int = 12) -> pd.Series:
+    """
+    计算基于斜率趋势的因子（每小时聚合）
+
+    :param series: 包含 'close' 的 DataFrame（5min 频率）
+    :param window: 平滑 MA 的窗口
+    :return: 每小时频率的仓位（根据斜率）
+    """
+    # 1. 5分钟级别的 MA 因子计算
+    ma = series["close"].rolling(window=window, min_periods=1).mean()
+    ma_smooth = ma.ewm(span=12, adjust=False).mean()
+    #fct = normalize_factor(ma_smooth)
+
+    # 2. 聚合方式：按每小时计算斜率
+    def slope_trend(x):
+        if len(x) < 3:
+            return 0  # 太少点拟合不了
+        # 拟合斜率：x 是 fct 值，y 是 index 的位置
+        x_vals = np.arange(len(x))
+        slope, _, _, _, _ = linregress(x_vals, x.values)
+        return slope
+
+    # 每小时计算斜率
+    trend_per_hour = ma_smooth.resample("h").apply(slope_trend)
+
+    # 3. 转为仓位（例如用 tanh 压缩）
+    return normalize_factor(trend_per_hour)
 
 
 def calculate_hourly_ofi(df: pd.DataFrame) -> pd.Series:
@@ -1686,7 +1715,7 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     df['log_return'] = np.log(df['close'] / df['close'].shift(1))
     
     # 计算波动率（例如，过去20天的日收益率标准差）
-    df['volatility'] = df['log_return'].rolling(window=20*24).std()
+    df['volatility'] = df['log_return'].rolling(window=7*24).std()
     
     # 计算平均成交量
     df['avg_volume_20'] = df['volume'].rolling(window=20*24).std()

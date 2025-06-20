@@ -18,11 +18,11 @@ def normalize_factor(factor: pd.Series, window: int = 2000) -> pd.Series:
 
 
     # # 过滤微弱信号（阈值可调）
-    # threshold = 1.5
-    # fct = _factor.fillna(0).where(lambda x: np.abs(x) >= threshold, 0)
+    threshold = 0.2
+    fct = _factor.fillna(0).where(lambda x: np.abs(x) >= threshold, 0)
 
     # 再用tanh缩放，收敛到[-1,1]
-    fct = np.tanh(_factor / 3) * 3
+    #fct = np.tanh(_factor / 3) * 3
 
     return fct.round(4)
 

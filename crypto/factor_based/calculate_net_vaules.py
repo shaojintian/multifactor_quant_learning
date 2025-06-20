@@ -11,9 +11,12 @@ def cal_net_values(pos: pd.Series, ret: pd.Series) -> pd.Series:
     # np.savetxt('factor_test_data/crypto/pos.txt', pos, delimiter=',')
     # np.savetxt('factor_test_data/crypto/ret.txt', ret, delimiter=',')
     # if len(pos) != len(ret):
-    #     raise ValueError("pos and ret must have the same length")
+    #     raise ValueError("pos and ret must have the same length",len(pos),len(ret))
     #print(pos)
     fee = 0.0005  # 仓位每次变动的滑损(maker 0.02%， taker 0.05%)
+
+    common_index = pos.index.intersection(ret.index)
+    pos, ret = pos.loc[common_index], ret.loc[common_index]
     # 使用 np.hstack 组合当前仓位和仓位变化
     position_changes = pos.diff().fillna(0)
 
@@ -99,6 +102,9 @@ def cal_net_values_before_rebate(pos: pd.Series, ret: pd.Series) -> pd.Series:
     fee = 0.0005  # 仓位每次变动的滑损(maker 0.02%， taker 0.05%)
     # 使用 np.hstack 组合当前仓位和仓位变化
     # 小于手续费的不执行交易，手续费为 0 仓位变化大于50%才交易
+    common_index = pos.index.intersection(ret.index)
+    pos, ret = pos.loc[common_index], ret.loc[common_index]
+
     position_changes = np.hstack((pos.iloc[0] - 0, np.diff(pos)))
     should_trade = np.abs(position_changes) > 1000 * fee  # boolean mask 0.5
     

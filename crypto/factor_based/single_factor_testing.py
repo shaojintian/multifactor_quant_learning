@@ -40,6 +40,7 @@ from factor_generator import *
 
 # %%
 # 0 data preprocess
+_cal_peroid = 5
 _period_minutes = 60
 _trading_hours = 24
 # %%
@@ -57,7 +58,15 @@ filtered_df = preprocess_data(filtered_df)
 # z.head()  # 注释掉以避免执行
 
 # %%
-# 2. 生成各种备选因子
+#2. 生成各种备选因子
+zz = pd.read_csv(f'data/crypto/btcusdt_{_cal_peroid}m.csv',index_col=0)
+zz.name = f"btcusdt_{_cal_peroid}m"
+import datetime
+#date_threshold = datetime.datetime(2020, 2, 1)
+#filtered_df = z[z.index > '2020-01-01']
+fct_df = zz
+fct_df.index = pd.to_datetime(fct_df.index, unit='ms', utc=True)
+fct_df = preprocess_data(fct_df).fillna(0)
 
 
 # from volatility_factor import calc_vol_mean_reversion_factor
@@ -80,11 +89,11 @@ print(ret.describe())
 # 您可以取消注释其他行来测试不同的单因子
 #alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
-    filtered_df, 
-    factor_logic_func= calculate_ma
+    fct_df, 
+    factor_logic_func= calculate_ma_trend_based
 
 )
-print(final_frame.columns)
+#print(final_frame.columns)
 # single_factor = volatility_factor
 # single_factor = adaptive_momentum_factor
 
@@ -106,7 +115,7 @@ plt.xlabel("Factor Value")
 plt.ylabel("Frequency")
 plt.legend()
 plt.grid(True)
-plt.show()
+#plt.show()
 
 
 # %%
