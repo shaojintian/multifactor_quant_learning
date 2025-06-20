@@ -90,7 +90,7 @@ print(ret.describe())
 #alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
     filtered_df, 
-    factor_logic_func= create_trend_following_vol_factor
+    factor_logic_func= mean_revert_when_neutral_and_stable
 
 )
 #print(final_frame.columns)

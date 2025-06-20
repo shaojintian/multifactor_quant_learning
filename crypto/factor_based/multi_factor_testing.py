@@ -121,7 +121,7 @@ final_frame = add_factor(
 
 final_frame = add_factor(
     final_frame, 
-    factor_logic_func=fct008
+    factor_logic_func=mean_revert_when_neutral_and_stable
 )
 final_frame = add_factor(
     final_frame,    
@@ -147,7 +147,7 @@ final_frame = add_factor(
 # single_factor = adaptive_momentum_factor
 
 #print("\n--- 多因子组合 ---",final_frame.columns[-6:])
-final_factor = combine_factors_lightgbm(final_frame, factor_cols=["create_trend_following_vol_factor","factor_bollinger_power","calculate_ma","fct001","calculate_optimized_position_v2","greed_factor","calculate_multi_period_momentum_filter_hourly","laziness_factor"],weights=[ 0.359000,0.516833,0.124167])
+final_factor = combine_factors_lightgbm(final_frame, factor_cols=["mean_revert_when_neutral_and_stable","create_trend_following_vol_factor","factor_bollinger_power","calculate_ma","fct001","calculate_optimized_position_v2","greed_factor","calculate_multi_period_momentum_filter_hourly","laziness_factor"],weights=[ 0.359000,0.516833,0.124167])
 # final_factor = combine_factors_linear(final_frame, factor_cols=final_frame.columns[-6:],weights=[0.2,0.2,0.2,0.2,0.2,0.2]) 
 #final_factor = alphas.alpha004()  # 选择 Alpha#101 作为单因子
 print("\n--- 原始多因子统计 ---")

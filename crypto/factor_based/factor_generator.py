@@ -19,6 +19,63 @@ def calculate_ma(series: pd.Series, window: int = 20) -> pd.Series:
     return position
 
 
+def mean_revert_when_neutral_and_stable(df: pd.DataFrame,
+                                        window: int = 14*24,
+                                        rsi_window: int = 140,
+                                        rsi_neutral_band: float = 10,
+                                        long_vol_window: int = 30*24,
+                                        vol_ratio_threshold: float = 1.2,
+                                        extreme_std_window: int = 20,
+                                        extreme_std_thresh: float = 3.0) -> pd.Series:
+    """
+    针对小时级别数据，仅在震荡、RSI中性、无日/周级极端波动下激活的均值回归因子
+    """
+    df = df.copy()
+    df['date'] = df.index.floor('D')  # 提取日期
+    df['week'] = df.index.to_period('W').start_time  # 提取周起始时间
+
+    # 1. Z-score
+    ma = df['close'].ewm(span=window, adjust=False).mean()
+    rolling_std = df['close'].rolling(window).std()
+    z = (df['close'] - ma) / (rolling_std + 1e-9)
+
+    # 2. RSI 中性
+    delta = df['close'].diff()
+    rsi_up = delta.clip(lower=0).rolling(rsi_window).mean()
+    rsi_down = delta.clip(upper=0).abs().rolling(rsi_window).mean()
+    rsi = 100 - 100 / (1 + rsi_up / (rsi_down + 1e-9))
+    rsi_neutral = (rsi - 50).abs() < rsi_neutral_band
+
+    # 3. 长周期低波动 regime
+    realized_vol = df['close'].pct_change().ewm(span=window, adjust=False).std()
+    long_term_vol = df['close'].pct_change().ewm(span=long_vol_window, adjust=False).std()
+    stable_vol_regime = (realized_vol / (long_term_vol + 1e-9)) < vol_ratio_threshold
+
+    # 4a. 极端波动“日”过滤
+    daily = df.resample('1D').agg({'high': 'max', 'low': 'min', 'close': 'last'})
+    daily['range'] = (daily['high'] - daily['low']) / (daily['close'] + 1e-9)
+    daily['range_std'] = daily['range'].rolling(extreme_std_window).std()
+    daily['is_extreme_day'] = daily['range'] > (extreme_std_thresh * daily['range_std'])
+    extreme_days = daily[daily['is_extreme_day']].index
+
+    # 4b. 极端波动“周”过滤
+    weekly = df.resample('1W').agg({'high': 'max', 'low': 'min', 'close': 'last'})
+    weekly['range'] = (weekly['high'] - weekly['low']) / (weekly['close'] + 1e-9)
+    weekly['range_std'] = weekly['range'].rolling(extreme_std_window).std()
+    weekly['is_extreme_week'] = weekly['range'] > (extreme_std_thresh * weekly['range_std'])
+    extreme_weeks = weekly[weekly['is_extreme_week']].index
+
+    # 5. 映射极端日/周标志
+    is_extreme_day = df['date'].isin(extreme_days)
+    is_extreme_week = df['week'].isin(extreme_weeks)
+
+    # 6. 综合过滤条件
+    valid_condition = rsi_neutral & stable_vol_regime & (~is_extreme_day) & (~is_extreme_week)
+
+    return (-z.where(valid_condition, 0.0)).fillna(0.0)
+
+
+
 def calculate_ma_with_adx_filter(
     series: pd.DataFrame, # 输入整个OHLCV数据帧
     window: int = 20,
