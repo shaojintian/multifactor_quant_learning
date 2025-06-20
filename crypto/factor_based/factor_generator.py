@@ -4,46 +4,123 @@ import numpy as np
 from util.norm import *
 from optimize_hopt import optimize_with_optuna
 from crypto.hft_factor.tick_features import ofi
+from scipy.stats import linregress
+import pandas_ta as ta
 # --- 1. 定义各种因子的计算逻辑 (作为独立的函数) ---
 
 #1.1trend vol AS 1.2
 #你可以用n个周期后的ret作为label，还可以再雕琢一下，用n个周期后不高于/不低于某个价格位置作为label
 # filter 震荡市 
-def calculate_ma(series: pd.Series, window: int = 20*2) -> pd.Series:
+def calculate_ma(series: pd.Series, window: int = 20) -> pd.Series:
     """计算简单移动平均线"""
     fct = normalize_factor(series["close"].rolling(window=window).mean().ewm(span=5*24).mean())
 
     position = np.tanh(fct) * 1.5 # 平滑压缩为 [-1.5, 1.5]
     return position.resample("H").mean().dropna()  # 将0值替换为NaN 0.8
-from scipy.stats import linregress
+
+
+def calculate_ma_with_adx_filter(
+    series: pd.DataFrame, # 输入整个OHLCV数据帧
+    window: int = 20,
+    adx_period: int = 14,
+    adx_threshold: float = 25.0
+) -> pd.Series:
+    """
+    计算带有 ADX 过滤器的移动平均策略仓位。
+    仅在 ADX 指示市场处于趋势状态时，才产生交易信号。
+    """
+    if not all(col in series.columns for col in ["open", "high", "low", "close"]):
+        raise ValueError("输入的数据帧 `series` 必须包含 'open', 'high', 'low', 'close' 列")
+
+    # 1. 计算原始的趋势跟踪因子
+    # 您的原始逻辑：双重平滑MA
+    ma_smooth = series["close"].rolling(window=window).mean().ewm(span=5*24).mean()
+    fct = normalize_factor(ma_smooth)
+    
+    # 原始的仓位信号（未经过滤）
+    raw_position = np.tanh(fct) * 1.5
+
+    # 2. 计算 ADX 指标作为市场状态过滤器
+    # pandas_ta 会自动处理 NaN，并返回一个包含 ADX, DMI+, DMI- 的DataFrame
+    adx_indicator = series.ta.adx(length=adx_period)
+    # 我们只需要 ADX 值
+    adx_series = adx_indicator[f'ADX_{adx_period}']
+
+    # 3. 应用过滤器
+    # 创建一个布尔条件的 Series：当 ADX 大于阈值时为 True (趋势市)
+    is_trending = adx_series > adx_threshold
+    
+    # 当 is_trending 为 False (震荡市) 时，将仓位强制设为 0
+    # 我们使用 .where() 方法，不满足条件的地方会被替换为指定值（这里是0）
+    filtered_position = raw_position.where(is_trending, 0)
+    
+    # 4. 按小时重采样并返回结果
+    # 注意：resample之后再fillna可能更合理，避免数据丢失
+    #final_position = filtered_position.resample("H").mean()
+    
+    # 这里可以选择如何处理震荡市留下的0值
+    # 如果希望在震荡市完全不持仓，就保留0
+    # 如果希望平滑过渡，可以用 ffill()
+    # final_position = final_position.fillna(method='ffill') 
+    
+    return filtered_position.dropna()
 
 def calculate_ma_trend_based(series: pd.DataFrame, window: int = 12) -> pd.Series:
     """
-    计算基于斜率趋势的因子（每小时聚合）
+    计算基于移动平均线（MA）斜率趋势的因子。
 
-    :param series: 包含 'close' 的 DataFrame（5min 频率）
-    :param window: 平滑 MA 的窗口
-    :return: 每小时频率的仓位（根据斜率）
+    该策略的核心思想是：
+    1. 计算价格的平滑移动平均线。
+    2. 按小时为单位，计算该平滑MA曲线的“局部趋势”（通过线性回归斜率来衡量）。
+    3. 斜率为正且越大，代表上升趋势越强，应持有多头仓位。
+    4. 斜率为负且越小，代表下降趋势越强，应持有空头仓位。
+    5. 最后将斜率转换为具体的仓位（例如 -1 到 +1）。
+
+    :param series: 包含 'close' 列的 DataFrame，其索引必须是 DatetimeIndex，频率为5分钟。
+    :param window: 用于计算滚动平均值的窗口大小。
+    :return: 每小时频率的仓位信号 Series (值在 -1 到 1 之间)。
     """
-    # 1. 5分钟级别的 MA 因子计算
+    # 确保索引是 datetime 类型
+    if not isinstance(series.index, pd.DatetimeIndex):
+        raise TypeError("The index of the series must be a DatetimeIndex.")
+        
+    # --- 1. 5分钟级别的 MA 因子计算 ---
+    # 首先计算一个简单的移动平均线
     ma = series["close"].rolling(window=window, min_periods=1).mean()
-    ma_smooth = ma.ewm(span=12, adjust=False).mean()
-    #fct = normalize_factor(ma_smooth)
+    # 对MA进行指数平滑，使其更稳定，减少噪音
+    ma_smooth = ma.ewm(span=window, adjust=False).mean()
 
-    # 2. 聚合方式：按每小时计算斜率
-    def slope_trend(x):
+    # --- 2. 按小时聚合：计算每小时内的MA斜率 ---
+    def slope_trend(x: pd.Series) -> float:
+        """
+        对给定的一组数据点（一小时内的平滑MA值）进行线性回归，返回其斜率。
+        """
+        # 如果数据点少于3个，无法有效拟合趋势，返回0（无趋势）
         if len(x) < 3:
-            return 0  # 太少点拟合不了
-        # 拟合斜率：x 是 fct 值，y 是 index 的位置
-        x_vals = np.arange(len(x))
-        slope, _, _, _, _ = linregress(x_vals, x.values)
+            return 0.0
+        
+        # 创建一个等差序列 [0, 1, 2, ...]作为自变量 x
+        time_steps = np.arange(len(x))
+        
+        # 使用 scipy 的 linregress 进行线性回归
+        # y 是传入的 ma_smooth 值
+        slope, _, _, _, _ = linregress(time_steps, x.values)
+        
         return slope
 
-    # 每小时计算斜率
+    # 使用 resample('h') 将5分钟数据按小时分组，并对每组应用 slope_trend 函数
+    print(f"\nCalculating trend slope for each hour...")
     trend_per_hour = ma_smooth.resample("h").apply(slope_trend)
 
-    # 3. 转为仓位（例如用 tanh 压缩）
-    return normalize_factor(trend_per_hour)
+    # --- 3. 将斜率转换为仓位 ---
+    # 使用 tanh 函数将斜率压缩到 [-1, 1] 区间，得到最终的仓位信号
+    position_signal = normalize_factor(trend_per_hour)
+    
+    position_signal.name = "position_signal"
+    
+    return position_signal.where(position_signal.abs()>1,0)
+
+
 
 
 def calculate_hourly_ofi(df: pd.DataFrame) -> pd.Series:

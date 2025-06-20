@@ -323,3 +323,97 @@ open time                                      ...
   适应度 (Fitness): 0.000000
   OOB适应度 (OOB Fitness): 0.000000
   因子长度 (Length): 3
+/Users/wanting/Downloads/multifactor_quant_learning/crypto/factor_based/factor_generator.py:1738: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df.dropna(inplace=True)
+模拟数据前5行:
+                               open      high  ...    trades_std  target_returns
+open time                                      ...                              
+2020-10-01 01:00:00+00:00  10788.30  10849.97  ...  12425.050843       -0.002006
+2020-10-01 02:00:00+00:00  10838.89  10857.47  ...  12435.907549       -0.001753
+2020-10-01 03:00:00+00:00  10817.14  10824.22  ...  12443.581286        0.000169
+2020-10-01 04:00:00+00:00  10798.38  10826.42  ...  12459.495305        0.001950
+2020-10-01 05:00:00+00:00  10800.00  10826.00  ...  12468.284381        0.000020
+
+[5 rows x 21 columns]
+
+开始进行遗传编程因子挖掘...
+    |   Population Average    |             Best Individual              |
+---- ------------------------- ------------------------------------------ ----------
+ Gen   Length          Fitness   Length          Fitness      OOB Fitness  Time Left
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)
+   0     7.93       0.00356304        6        0.0161529      0.000993469     11.47m
+   1     3.44       0.00579952        3        0.0179017        0.0433762      5.59m
+   2     3.34       0.00707869        5        0.0196003        0.0207932      6.45m
+   3     3.70       0.00731715        5        0.0198778         0.024154      2.72m
+   4     4.04       0.00807217        5        0.0213265        0.0344067      0.00s
+
+==================================================
+--- 最好的10个因子 (按适应度排序) ---
+==================================================
+
+排名 1:
+  因子表达式: ts_std(0.698)
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 2
+
+排名 2:
+  因子表达式: ts_std(0.153)
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 2
+
+排名 3:
+  因子表达式: ts_corr(ts_skewness(0.460), taker buy base asset volume)
+  适应度 (Fitness): 0.000000
+  OOB适应度 (OOB Fitness): 0.000000
+  因子长度 (Length): 4
+/Users/wanting/Downloads/multifactor_quant_learning/crypto/factor_based/factor_generator.py:1765: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df.dropna(inplace=True)
+模拟数据前5行:
+                               open      high  ...    trades_std  target_returns
+open time                                      ...                              
+2020-10-01 01:00:00+00:00  10788.30  10849.97  ...  12425.050843       -0.002006
+2020-10-01 02:00:00+00:00  10838.89  10857.47  ...  12435.907549       -0.001753
+2020-10-01 03:00:00+00:00  10817.14  10824.22  ...  12443.581286        0.000169
+2020-10-01 04:00:00+00:00  10798.38  10826.42  ...  12459.495305        0.001950
+2020-10-01 05:00:00+00:00  10800.00  10826.00  ...  12468.284381        0.000020
+
+[5 rows x 21 columns]
+
+开始进行遗传编程因子挖掘...
+Traceback (most recent call last):
+  File "/Users/wanting/Downloads/multifactor_quant_learning/crypto/factor_based/auto_mining_gplearn.py", line 197, in <module>
+    est_gp.fit(X_train, y_train)
+  File "/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/genetic.py", line 374, in fit
+    raise ValueError('The sum of p_crossover, p_subtree_mutation, '
+ValueError: The sum of p_crossover, p_subtree_mutation, p_hoist_mutation and p_point_mutation should total to 1.0 or less.
+/Users/wanting/Downloads/multifactor_quant_learning/crypto/factor_based/factor_generator.py:1812: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df.dropna(inplace=True)
+模拟数据前5行:
+                               open      high  ...    trades_std  target_returns
+open time                                      ...                              
+2020-10-01 01:00:00+00:00  10788.30  10849.97  ...  12425.050843       -0.002006
+2020-10-01 02:00:00+00:00  10838.89  10857.47  ...  12435.907549       -0.001753
+2020-10-01 03:00:00+00:00  10817.14  10824.22  ...  12443.581286        0.000169
+2020-10-01 04:00:00+00:00  10798.38  10826.42  ...  12459.495305        0.001950
+2020-10-01 05:00:00+00:00  10800.00  10826.00  ...  12468.284381        0.000020
+
+[5 rows x 21 columns]
+
+开始进行遗传编程因子挖掘...
+    |   Population Average    |             Best Individual              |
+---- ------------------------- ------------------------------------------ ----------
+ Gen   Length          Fitness   Length          Fitness      OOB Fitness  Time Left
+/Users/wanting/Downloads/multifactor_quant_learning/.venv/lib/python3.10/site-packages/gplearn/functions.py:46: RuntimeWarning: invalid value encountered in multiply
+  return self.function(*args)

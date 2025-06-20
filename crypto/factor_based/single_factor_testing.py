@@ -89,8 +89,8 @@ print(ret.describe())
 # 您可以取消注释其他行来测试不同的单因子
 #alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
-    fct_df, 
-    factor_logic_func= calculate_ma_trend_based
+    filtered_df, 
+    factor_logic_func= calculate_ma
 
 )
 #print(final_frame.columns)
