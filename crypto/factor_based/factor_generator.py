@@ -16,7 +16,7 @@ def calculate_ma(series: pd.Series, window: int = 20) -> pd.Series:
     fct = normalize_factor(series["close"].rolling(window=window).mean().ewm(span=5*24).mean())
 
     position = np.tanh(fct) * 1.5 # 平滑压缩为 [-1.5, 1.5]
-    return position.resample("H").mean().dropna()  # 将0值替换为NaN 0.8
+    return position
 
 
 def calculate_ma_with_adx_filter(
@@ -118,7 +118,7 @@ def calculate_ma_trend_based(series: pd.DataFrame, window: int = 12) -> pd.Serie
     
     position_signal.name = "position_signal"
     
-    return position_signal.where(position_signal.abs()>1,0)
+    return position_signal
 
 
 
@@ -168,7 +168,7 @@ def calculate_ema_decay(df :pd.DataFrame, span: int = 12*24) -> pd.Series:
     return position
 
 
-@optimize_with_optuna
+# @optimize_with_optuna
 def calc_pin_bar_reversal_factor(df: pd.DataFrame, 
                                  atr_period: int = 13,
                                  vol_multiplier: float = 0.3,

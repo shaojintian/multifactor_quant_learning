@@ -155,3 +155,43 @@ def calculate_calmar_ratio(net_value: pd.Series, periods_per_year: int = 365*24)
     if max_drawdown == 0:
         return np.nan  # 避免除以0
     return annual_return / abs(max_drawdown)
+
+
+def calculate_annualized_return(net_value: pd.Series, periods_per_year: int = 365*24) -> float:
+    """
+    根据策略的净值序列计算年化收益率。
+    Generated code
+    该计算基于几何平均收益，公式为：
+    (期末净值 / 期初净值) ^ (1 / 年数) - 1
+
+    Args:
+        net_value (pd.Series): 包含策略净值的时间序列。索引可以是时间，也可以是简单的数字序列。
+        periods_per_year (int): 每年的周期数。
+                                - 对于日度数据，通常使用 252 (交易日) 或 365 (日历日)。
+                                - 对于小时数据，通常使用 252 * 4 (A股交易小时) 或 365 * 24。
+                                - 对于分钟数据，则为 252 * 4 * 60。
+                                默认为 252 (适用于日度数据)。
+
+    Returns:
+        float: 策略的年化收益率。如果数据点少于2个，则返回 0.0。
+    """
+    # 确保有足够的数据点进行计算
+    if len(net_value) < 2:
+        return 0.0
+
+    # 计算总的年数
+    # 假设数据点是均匀分布的
+    num_years = len(net_value) / periods_per_year
+
+    # 如果总时间跨度为0，无法计算，返回0
+    if num_years == 0:
+        return 0.0
+
+    # 计算总收益率 (期末净值 / 期初净值)
+    total_return_factor = net_value.iloc[-1] / net_value.iloc[0]
+
+    # 使用几何平均值计算年化收益率
+    # 公式: (总收益率) ^ (1 / 年数) - 1
+    annualized_return = total_return_factor ** (1 / num_years) - 1
+
+    return annualized_return

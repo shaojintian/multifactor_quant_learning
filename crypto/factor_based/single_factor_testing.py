@@ -90,7 +90,7 @@ print(ret.describe())
 #alphas = Alphas(df=filtered_df)
 final_frame = add_factor(
     filtered_df, 
-    factor_logic_func= calculate_ma
+    factor_logic_func= create_trend_following_vol_factor
 
 )
 #print(final_frame.columns)
@@ -108,13 +108,13 @@ print(final_factor.describe())
 
 # %%
 # 6. 可视化处理后的因子分布
-print("\n--- 可视化最终因子分布 ---")
-plt.hist(final_factor.dropna(), bins=50, alpha=0.7, label=final_factor.name)
-plt.title(f"Distribution of Final Factor: {final_factor.name}")
-plt.xlabel("Factor Value")
-plt.ylabel("Frequency")
-plt.legend()
-plt.grid(True)
+# print("\n--- 可视化最终因子分布 ---")
+# plt.hist(final_factor.dropna(), bins=50, alpha=0.7, label=final_factor.name)
+# plt.title(f"Distribution of Final Factor: {final_factor.name}")
+# plt.xlabel("Factor Value")
+# plt.ylabel("Frequency")
+# plt.legend()
+# plt.grid(True)
 #plt.show()
 
 

@@ -34,7 +34,10 @@ from combine_factor import *
 # from verify_risk_orthogonalization import risk_orthogonalization # 不再需要风险正交
 pd.plotting.register_matplotlib_converters()
 from factor_generator import *
-
+import logging
+logger = logging.getLogger("sample")
+logger.addHandler(logging.FileHandler("./crypto/logging.txt"))
+logger.setLevel(logging.INFO)
 
 # %%
 # 0 data preprocess
@@ -98,30 +101,57 @@ final_frame = add_factor(
     final_frame,
     factor_logic_func=calculate_ma,
 )
-# final_frame = add_factor(
-#     final_frame,
-#     factor_logic_func=calculate_momentum,
-# )
+final_frame = add_factor(
+    final_frame,
+    factor_logic_func=calculate_momentum,
+)
 final_frame = add_factor(
     final_frame, 
-    factor_logic_func=calculate_ma #Share 1.3
+    factor_logic_func=laziness_factor #Share 1.3
 )
-
-
-
 final_frame = add_factor(
     final_frame, 
     factor_logic_func=fear_factor
 )
+
+final_frame = add_factor(
+    final_frame, 
+    factor_logic_func=fct007
+)
+
+final_frame = add_factor(
+    final_frame, 
+    factor_logic_func=fct008
+)
+final_frame = add_factor(
+    final_frame,    
+    factor_logic_func=fct003 ,
+)
+
+final_frame = add_factor(
+    final_frame,    
+    factor_logic_func=fct004 ,
+)
+
+final_frame = add_factor(
+    final_frame, 
+    factor_logic_func=create_trend_following_vol_factor
+)
+
+final_frame = add_factor(
+    final_frame, 
+    factor_logic_func=factor_bollinger_power
+)
+
 # single_factor = volatility_factor
 # single_factor = adaptive_momentum_factor
 
-print("\n--- 多因子组合 ---",final_frame.columns[-6:])
-final_factor = combine_factors_lightgbm(final_frame, factor_cols=["calculate_ma"],weights=[0.8,0.2])
+#print("\n--- 多因子组合 ---",final_frame.columns[-6:])
+final_factor = combine_factors_lightgbm(final_frame, factor_cols=["create_trend_following_vol_factor","factor_bollinger_power","calculate_ma","fct001","calculate_optimized_position_v2","greed_factor","calculate_multi_period_momentum_filter_hourly","laziness_factor"],weights=[ 0.359000,0.516833,0.124167])
 # final_factor = combine_factors_linear(final_frame, factor_cols=final_frame.columns[-6:],weights=[0.2,0.2,0.2,0.2,0.2,0.2]) 
 #final_factor = alphas.alpha004()  # 选择 Alpha#101 作为单因子
 print("\n--- 原始多因子统计 ---")
-print(final_factor.describe())
+#print(final_factor.describe())
 
 #final_factor.to_csv('factor_test_data/crypto/final_factor.csv')
 
@@ -195,21 +225,23 @@ plt.tight_layout()
 # plt.show()
 
 
+
 # %%
 # 11. 计算年化夏普比率
 cleaned_net_values = net_values.dropna()
 sharp = calculate_sharpe_ratio_corrected(cleaned_net_values,period_minutes=_period_minutes,trading_hours=_trading_hours)
 
 print(f"\n--- 策略表现评估 ({final_factor.name}) ---")
-print(f"年化夏普比率 (Annualized Sharpe Ratio): {sharp:.4f}")
+logger.info(f"年化夏普比率 (Annualized Sharpe Ratio): {sharp:.4f}")
+
 
 # 12. 计算max drawdown
 from util.max_drawdown import calculate_max_drawdown
 max_drawdown = calculate_max_drawdown(cleaned_net_values)
-print(f"最大回撤 (Max Drawdown): {max_drawdown:.2%}")
+logger.info(f"最大回撤 (Max Drawdown): {max_drawdown:.2%}")
 
 calmar_ratio = calculate_calmar_ratio(net_values)
-print(f"Calmar Ratio: {calmar_ratio:.2f}")
+logger.info(f"Calmar Ratio: {calmar_ratio:.2f}")
 
 plt.figtext(0.5, 0.95, f"Annualized Sharpe Ratio: {sharp:.4f}", ha="center", fontsize=12, color="blue")
 
@@ -217,6 +249,10 @@ plt.figtext(0.5, 0.95, f"Annualized Sharpe Ratio: {sharp:.4f}", ha="center", fon
 plt.figtext(0.5, 0.01, f"Max Drawdown: {max_drawdown:.2%}", ha="center", fontsize=12, color="red")
 
 plt.figtext(0.5, 0.98, f"Calmar Ratio: {calmar_ratio:.4f}", ha="center", fontsize=12, color="green")
+
+ar = calculate_annualized_return(net_values)
+plt.figtext(0.5, 0.05, f"annual return: {ar:.2%}", ha="center", fontsize=12, color="blue")
+logger.info(f"annual return: {ar:.2%}")
 
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # 预留上下空间避免覆盖
 plt.show()

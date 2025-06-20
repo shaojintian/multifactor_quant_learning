@@ -4,7 +4,10 @@ import pandas as pd
 from util.norm import normalize_factor, discretize_factor
 from verify_risk_orthogonalization import risk_orthogonalization
 import lightgbm as lgb
-
+import logging
+logger = logging.getLogger("sample")
+logger.addHandler(logging.FileHandler("./crypto/logging.txt"))
+logger.setLevel(logging.INFO)
 
 import pandas as pd
 import numpy as np
@@ -155,7 +158,7 @@ def combine_factors_linear(df: pd.DataFrame, factor_cols: list, weights: list) -
     return pd.Series(combined, index=df.index, name="combined_factor")
 
 
-def _compute_rolling_sharpe(series: pd.Series, window: int = 60) -> pd.Series:
+def _compute_rolling_sharpe(series: pd.Series, window: int = 30*24) -> pd.Series:
     """
     计算滑动窗口内的年化 Sharpe ratio。
     """
@@ -231,8 +234,18 @@ def _compute_rolling_combined_score(return_series: pd.Series, window: int = 60*2
         else:
             calmar = 0
 
+        negative_returns = window_ret[window_ret < 0]
+        downside_std_dev = np.std(negative_returns) if len(negative_returns) > 0 else 0
+        
+        if downside_std_dev > 0:
+            sortino = (window_ret.mean() / downside_std_dev) * np.sqrt(365 * 24)
+        else:
+            # 如果没有下行波动，理论上Sortino是无穷大，可以给一个很大的正数表示极好
+            # 或者在mean_ret > 0时返回一个大数，否则返回0
+            sortino = 100.0 if window_ret.mean() > 0 else 0
+
         # 组合目标函数
-        score = calmar + 0.5 * sharpe
+        score = (calmar + 0.4 * sharpe + 0.6*sortino )
         scores.append(score)
 
     return pd.Series(scores, index=return_series.index)
@@ -261,10 +274,10 @@ def combine_factors_lightgbm(df: pd.DataFrame,
     #df['future_sharpe'] = _compute_rolling_sharpe(df[return_col].shift(-1), window=sharpe_window).fillna(0)
     #df['future_calmar'] = _compute_rolling_combined_score(df[return_col].shift(-1),window=sharpe_window).fillna(0)
 
-    df['future_calmar'] =  _compute_rolling_calmar(df[return_col].shift(-1))  # LightGBM 参数
+    df['future_calmar'] =  _compute_rolling_combined_score(df[return_col].shift(-1)).fillna(0)  # LightGBM 参数 # key #####################
     X = df[factor_cols]
     X = risk_orthogonalization(X)  # 风险正交化处理
-    y = df[return_col].shift(-1).rolling(window=3*24, min_periods=24).mean().fillna(0)
+    y = df['future_calmar']
 
     # LightGBM 参数
     if lgbm_params is None:
@@ -305,9 +318,9 @@ def combine_factors_lightgbm(df: pd.DataFrame,
     combined_factor = pd.Series(combined_factor, index=df.index, name="combined_factor lightgmb")
 
     feature_importances = pd.Series(weights, index=X.columns, name="Feature Importance")
-    print("\n模型学习到的特征重要性:\n",feature_importances.sort_values(ascending=False))
+    logger.info(feature_importances.sort_values(ascending=False))
 
-    combined_factor = combined_factor
+    combined_factor = combined_factor*2
     
     # combined_factor = np.tanh(combined_factor) * 1.5
     return combined_factor
