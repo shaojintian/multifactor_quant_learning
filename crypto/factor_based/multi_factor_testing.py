@@ -1,19 +1,3 @@
-# -*- coding: utf-8 -*-
-# ---
-# jupyter:
-#   jupytext:
-#     cell_metadata_filter: -all
-#     custom_cell_magics: kql
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.11.2
-#   kernelspec:
-#     display_name: Python 3
-#     language: python
-#     name: python3
-# ---
 
 # %%
 # 在文件最开头添加以下代码
@@ -151,7 +135,7 @@ final_frame = add_factor(
 final_factor = combine_factors_lightgbm(final_frame, factor_cols=["mean_revert_when_neutral_and_stable","create_trend_following_vol_factor","factor_bollinger_power","calculate_ma","fct001","calculate_optimized_position_v2","greed_factor","calculate_multi_period_momentum_filter_hourly","laziness_factor"],weights=[ 0.359000,0.516833,0.124167])
 # final_factor = combine_factors_linear(final_frame, factor_cols=final_frame.columns[-6:],weights=[0.2,0.2,0.2,0.2,0.2,0.2]) 
 #final_factor = alphas.alpha004()  # 选择 Alpha#101 作为单因子
-print("\n--- 多因子统计 ---")
+#print("\n--- 多因子统计 ---")
 #print(final_factor.describe())
 
 #final_factor.to_csv(f'factor_test_data/crypto/final_factor{_coin}.csv')

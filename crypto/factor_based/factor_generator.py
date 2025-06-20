@@ -1866,8 +1866,8 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     df["trades_std"] = df['number of trades'].rolling(window=20*24).std()
 
     df["target_returns"] =  df["returns"].shift(-1).fillna(0)   
-    df = df.loc[df.index > pd.Timestamp("2020-10-01").tz_localize("UTC")]
-    df.dropna(inplace=True)
+    #df = df.loc[df.index > pd.Timestamp("2020-10-01").tz_localize("UTC")]
+    df.fillna(0)
     return df
 
 

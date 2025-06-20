@@ -31,6 +31,7 @@ def get_klines(symbol, interval, start_time=None, end_time=None):
         'Taker Buy Base Asset Volume', 'Taker Buy Quote Asset Volume', 'Ignore'
     ])
     
+    df.columns = [col.lower() for col in df.columns]
     return df
 
 def fetch_all_klines(symbol, interval, start_time, end_time):
@@ -47,20 +48,31 @@ def fetch_all_klines(symbol, interval, start_time, end_time):
         all_klines.append(klines_df)
         
         # 更新当前开始时间为最后一条数据的时间
-        current_start_time = klines_df['Close Time'].iloc[-1] + 1  # 加1毫秒以避免重复
+        current_start_time = klines_df['close time'].iloc[-1] + 1  # 加1毫秒以避免重复
         
     # 合并所有数据
     return pd.concat(all_klines, ignore_index=True)
 
 # 示例调用
-symbol = 'SOLUSDT'  # 交易对
+symbol = 'ETHUSDT'  # 交易对
 interval = '1h'    # 时间间隔
-start_time = date_to_utc_milliseconds("2020-11-01")  # 起始时间（毫秒）
-end_time = date_to_utc_milliseconds("2025-06-10")    # 结束时间（毫秒）
+start_time = date_to_utc_milliseconds("2020-10-01")  # 起始时间（毫秒）
+end_time = date_to_utc_milliseconds("2025-07-10")    # 结束时间（毫秒）
 
 # 获取所有K线数据
 all_klines_df = fetch_all_klines(symbol, interval, start_time, end_time)
 
 # 保存到CSV文件
-all_klines_df.to_csv(f'data/crypto/{symbol}_{interval}.csv', index=False)
+file_path = 'data/crypto/ethusdt_60m.csv'
+
+if os.path.exists(file_path):
+    existing_df = pd.read_csv(file_path, index_col=0)  # 读时把原索引当成index
+    combined_df = pd.concat([existing_df, all_klines_df], ignore_index=False)  # 保留原索引，不重置
+    combined_df = combined_df[~combined_df.index.duplicated(keep='first')]  # 按索引去重，保留第一个
+    combined_df = combined_df.drop_duplicates(subset=['open time'], keep='first')  # 按 open time 去重
+else:
+    combined_df = all_klines_df
+
+combined_df.index = combined_df["open time"]
+combined_df.to_csv(file_path)
 print(f"Data fetching complete. length: {len(all_klines_df)}")
