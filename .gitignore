@@ -48,4 +48,3 @@ data/crypto/data/futures/*
 
 crypto/backtest/logs/*
 
-data/crypto/online_trading.py
