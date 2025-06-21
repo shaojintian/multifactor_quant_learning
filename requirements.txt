@@ -5,7 +5,7 @@ ccxt==4.4.90
 
 gplearn==0.4.2
 
-lightgbm==4.6.0
+lightgbm==4.3.0
 
 matplotlib==3.10.0
 
