@@ -1,5 +1,5 @@
 
-binance-futures-connector==4.1.0
+binance-futures-connector==3.2.0
 ccxt==4.4.90
 certifi==2024.12.14
 cffi==1.17.1
