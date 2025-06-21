@@ -27,7 +27,7 @@ logger.setLevel(logging.INFO)
 # 0 data preprocess
 _period_minutes = 60
 _trading_hours = 24
-_coin = "eth"
+_coin = "btc"
 # %%
 #1. 读取行情数据
 z = pd.read_csv(f'data/crypto/{_coin}usdt_{_period_minutes}m.csv',index_col=0)
@@ -172,7 +172,7 @@ final_factor = combine_factors_lightgbm(final_frame, factor_cols=["mean_revert_w
 net_values = cal_net_values_compounded(final_factor,ret)
 #print(net_values.values)  # numpy array
 # 9. 计算策略净值（不考虑手续费）
-net_values_before_rebate = cal_net_values_before_rebate(final_factor,ret)
+net_values_before_rebate = cal_net_values(final_factor,ret)
 plt.figure(figsize=(12, 6))
 
 
@@ -189,8 +189,7 @@ plt.plot(net_values.index, net_values.values, label="Net Value (with fee) compou
 #print(net_values)
 
 # 画净值曲线（不考虑手续费）
-plt.plot(net_values_before_rebate.index, net_values_before_rebate.values, label="Net Value (before fee) single interest", linewidth=2, linestyle="--")
-
+plt.plot(net_values_before_rebate.index, net_values_before_rebate.values, label="Net Value (with fee) single interest", linewidth=2)
 # 图形设置
 plt.title(f"Net Value Curve Comparison - {z.name} - Factor: {final_factor.name}")
 plt.xlabel("Date")
@@ -226,6 +225,9 @@ print(f"\n--- 策略表现评估 ({final_factor.name}) ---")
 logger.info(f"年化夏普比率 (Annualized Sharpe Ratio): {sharp:.4f}")
 
 
+sharp_single = calculate_sharpe_ratio_corrected(net_values_before_rebate,period_minutes=_period_minutes,trading_hours=_trading_hours)
+logger.info(f"年化夏普比率 (Annualized Sharpe Ratio single interest): {sharp_single:.4f}")
+
 # 12. 计算max drawdown
 from util.max_drawdown import calculate_max_drawdown
 max_drawdown = calculate_max_drawdown(cleaned_net_values)
@@ -234,7 +236,10 @@ logger.info(f"最大回撤 (Max Drawdown): {max_drawdown:.2%}")
 calmar_ratio = calculate_calmar_ratio(net_values)
 logger.info(f"Calmar Ratio: {calmar_ratio:.2f}")
 
-plt.figtext(0.5, 0.95, f"Annualized Sharpe Ratio: {sharp:.4f}", ha="center", fontsize=12, color="blue")
+plt.figtext(0.5, 0.95, f"Annualized Sharpe Ratio(compounded): {sharp:.4f}", ha="center", fontsize=12, color="blue")
+
+
+plt.figtext(0.5, 0.93, f"Annualized Sharpe Ratio(single): {sharp_single:.4f}", ha="center", fontsize=12, color="blue")
 
 # 图下方显示最大回撤
 plt.figtext(0.5, 0.01, f"Max Drawdown: {max_drawdown:.2%}", ha="center", fontsize=12, color="red")
@@ -246,4 +251,4 @@ plt.figtext(0.5, 0.05, f"annual return: {ar:.2%}", ha="center", fontsize=12, col
 logger.info(f"annual return: {ar:.2%}")
 
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # 预留上下空间避免覆盖
-#plt.show()
+plt.show()

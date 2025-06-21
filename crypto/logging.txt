@@ -2065,3 +2065,233 @@ Calmar Ratio: 2.60
 Calmar Ratio: 2.60
 annual return: 120.15%
 annual return: 120.15%
+factor_bollinger_power_ortho                           0.183167
+calculate_ma_ortho                                     0.168167
+fct001_ortho                                           0.128000
+create_trend_following_vol_factor_ortho                0.120000
+mean_revert_when_neutral_and_stable_ortho              0.117833
+calculate_multi_period_momentum_filter_hourly_ortho    0.106500
+calculate_optimized_position_v2_ortho                  0.105667
+greed_factor_ortho                                     0.044500
+laziness_factor_ortho                                  0.026167
+Name: Feature Importance, dtype: float64
+factor_bollinger_power_ortho                           0.183167
+calculate_ma_ortho                                     0.168167
+fct001_ortho                                           0.128000
+create_trend_following_vol_factor_ortho                0.120000
+mean_revert_when_neutral_and_stable_ortho              0.117833
+calculate_multi_period_momentum_filter_hourly_ortho    0.106500
+calculate_optimized_position_v2_ortho                  0.105667
+greed_factor_ortho                                     0.044500
+laziness_factor_ortho                                  0.026167
+Name: Feature Importance, dtype: float64
+年化夏普比率 (Annualized Sharpe Ratio): 0.8816
+年化夏普比率 (Annualized Sharpe Ratio): 0.8816
+最大回撤 (Max Drawdown): -52.71%
+最大回撤 (Max Drawdown): -52.71%
+Calmar Ratio: 0.73
+Calmar Ratio: 0.73
+annual return: 38.25%
+annual return: 38.25%
+factor_bollinger_power_ortho                           0.179667
+calculate_ma_ortho                                     0.175500
+fct001_ortho                                           0.131000
+create_trend_following_vol_factor_ortho                0.129500
+calculate_multi_period_momentum_filter_hourly_ortho    0.113167
+calculate_optimized_position_v2_ortho                  0.108500
+mean_revert_when_neutral_and_stable_ortho              0.102333
+greed_factor_ortho                                     0.033000
+laziness_factor_ortho                                  0.027333
+Name: Feature Importance, dtype: float64
+factor_bollinger_power_ortho                           0.179667
+calculate_ma_ortho                                     0.175500
+fct001_ortho                                           0.131000
+create_trend_following_vol_factor_ortho                0.129500
+calculate_multi_period_momentum_filter_hourly_ortho    0.113167
+calculate_optimized_position_v2_ortho                  0.108500
+mean_revert_when_neutral_and_stable_ortho              0.102333
+greed_factor_ortho                                     0.033000
+laziness_factor_ortho                                  0.027333
+Name: Feature Importance, dtype: float64
+年化夏普比率 (Annualized Sharpe Ratio): 1.7867
+年化夏普比率 (Annualized Sharpe Ratio): 1.7867
+最大回撤 (Max Drawdown): -46.23%
+最大回撤 (Max Drawdown): -46.23%
+Calmar Ratio: 2.60
+Calmar Ratio: 2.60
+annual return: 120.15%
+annual return: 120.15%
+factor_bollinger_power_ortho                           0.179667
+calculate_ma_ortho                                     0.175500
+fct001_ortho                                           0.131000
+create_trend_following_vol_factor_ortho                0.129500
+calculate_multi_period_momentum_filter_hourly_ortho    0.113167
+calculate_optimized_position_v2_ortho                  0.108500
+mean_revert_when_neutral_and_stable_ortho              0.102333
+greed_factor_ortho                                     0.033000
+laziness_factor_ortho                                  0.027333
+Name: Feature Importance, dtype: float64
+factor_bollinger_power_ortho                           0.179667
+calculate_ma_ortho                                     0.175500
+fct001_ortho                                           0.131000
+create_trend_following_vol_factor_ortho                0.129500
+calculate_multi_period_momentum_filter_hourly_ortho    0.113167
+calculate_optimized_position_v2_ortho                  0.108500
+mean_revert_when_neutral_and_stable_ortho              0.102333
+greed_factor_ortho                                     0.033000
+laziness_factor_ortho                                  0.027333
+Name: Feature Importance, dtype: float64
+年化夏普比率 (Annualized Sharpe Ratio): 1.7867
+年化夏普比率 (Annualized Sharpe Ratio): 1.7867
+最大回撤 (Max Drawdown): -46.23%
+最大回撤 (Max Drawdown): -46.23%
+Calmar Ratio: 2.60
+Calmar Ratio: 2.60
+annual return: 120.15%
+annual return: 120.15%
+calculate_ma_ortho                                     0.172167
+factor_bollinger_power_ortho                           0.165167
+fct001_ortho                                           0.135667
+create_trend_following_vol_factor_ortho                0.122833
+calculate_multi_period_momentum_filter_hourly_ortho    0.118833
+calculate_optimized_position_v2_ortho                  0.110833
+mean_revert_when_neutral_and_stable_ortho              0.102667
+laziness_factor_ortho                                  0.040000
+greed_factor_ortho                                     0.031833
+Name: Feature Importance, dtype: float64
+calculate_ma_ortho                                     0.172167
+factor_bollinger_power_ortho                           0.165167
+fct001_ortho                                           0.135667
+create_trend_following_vol_factor_ortho                0.122833
+calculate_multi_period_momentum_filter_hourly_ortho    0.118833
+calculate_optimized_position_v2_ortho                  0.110833
+mean_revert_when_neutral_and_stable_ortho              0.102667
+laziness_factor_ortho                                  0.040000
+greed_factor_ortho                                     0.031833
+Name: Feature Importance, dtype: float64
+年化夏普比率 (Annualized Sharpe Ratio): 2.1770
+年化夏普比率 (Annualized Sharpe Ratio): 2.1770
+最大回撤 (Max Drawdown): -23.80%
+最大回撤 (Max Drawdown): -23.80%
+Calmar Ratio: 5.19
+Calmar Ratio: 5.19
+annual return: 123.42%
+annual return: 123.42%
+calculate_ma_ortho                                     0.188333
+factor_bollinger_power_ortho                           0.151333
+fct001_ortho                                           0.133333
+create_trend_following_vol_factor_ortho                0.121500
+calculate_multi_period_momentum_filter_hourly_ortho    0.118000
+calculate_optimized_position_v2_ortho                  0.099333
+mean_revert_when_neutral_and_stable_ortho              0.087333
+greed_factor_ortho                                     0.052333
+laziness_factor_ortho                                  0.048500
+Name: Feature Importance, dtype: float64
+calculate_ma_ortho                                     0.188333
+factor_bollinger_power_ortho                           0.151333
+fct001_ortho                                           0.133333
+create_trend_following_vol_factor_ortho                0.121500
+calculate_multi_period_momentum_filter_hourly_ortho    0.118000
+calculate_optimized_position_v2_ortho                  0.099333
+mean_revert_when_neutral_and_stable_ortho              0.087333
+greed_factor_ortho                                     0.052333
+laziness_factor_ortho                                  0.048500
+Name: Feature Importance, dtype: float64
+年化夏普比率 (Annualized Sharpe Ratio): 2.9216
+年化夏普比率 (Annualized Sharpe Ratio): 2.9216
+最大回撤 (Max Drawdown): -15.92%
+最大回撤 (Max Drawdown): -15.92%
+Calmar Ratio: 13.35
+Calmar Ratio: 13.35
+annual return: 212.51%
+annual return: 212.51%
+calculate_ma_ortho                                     0.188333
+factor_bollinger_power_ortho                           0.151333
+fct001_ortho                                           0.133333
+create_trend_following_vol_factor_ortho                0.121500
+calculate_multi_period_momentum_filter_hourly_ortho    0.118000
+calculate_optimized_position_v2_ortho                  0.099333
+mean_revert_when_neutral_and_stable_ortho              0.087333
+greed_factor_ortho                                     0.052333
+laziness_factor_ortho                                  0.048500
+Name: Feature Importance, dtype: float64
+calculate_ma_ortho                                     0.188333
+factor_bollinger_power_ortho                           0.151333
+fct001_ortho                                           0.133333
+create_trend_following_vol_factor_ortho                0.121500
+calculate_multi_period_momentum_filter_hourly_ortho    0.118000
+calculate_optimized_position_v2_ortho                  0.099333
+mean_revert_when_neutral_and_stable_ortho              0.087333
+greed_factor_ortho                                     0.052333
+laziness_factor_ortho                                  0.048500
+Name: Feature Importance, dtype: float64
+年化夏普比率 (Annualized Sharpe Ratio): 2.9216
+年化夏普比率 (Annualized Sharpe Ratio): 2.9216
+年化夏普比率 (Annualized Sharpe Ratio single interest): 2.8592
+年化夏普比率 (Annualized Sharpe Ratio single interest): 2.8592
+最大回撤 (Max Drawdown): -15.92%
+最大回撤 (Max Drawdown): -15.92%
+Calmar Ratio: 13.35
+Calmar Ratio: 13.35
+annual return: 212.51%
+annual return: 212.51%
+calculate_ma_ortho                                     0.172167
+factor_bollinger_power_ortho                           0.165167
+fct001_ortho                                           0.135667
+create_trend_following_vol_factor_ortho                0.122833
+calculate_multi_period_momentum_filter_hourly_ortho    0.118833
+calculate_optimized_position_v2_ortho                  0.110833
+mean_revert_when_neutral_and_stable_ortho              0.102667
+laziness_factor_ortho                                  0.040000
+greed_factor_ortho                                     0.031833
+Name: Feature Importance, dtype: float64
+calculate_ma_ortho                                     0.172167
+factor_bollinger_power_ortho                           0.165167
+fct001_ortho                                           0.135667
+create_trend_following_vol_factor_ortho                0.122833
+calculate_multi_period_momentum_filter_hourly_ortho    0.118833
+calculate_optimized_position_v2_ortho                  0.110833
+mean_revert_when_neutral_and_stable_ortho              0.102667
+laziness_factor_ortho                                  0.040000
+greed_factor_ortho                                     0.031833
+Name: Feature Importance, dtype: float64
+年化夏普比率 (Annualized Sharpe Ratio): 2.1770
+年化夏普比率 (Annualized Sharpe Ratio): 2.1770
+年化夏普比率 (Annualized Sharpe Ratio single interest): 1.9064
+年化夏普比率 (Annualized Sharpe Ratio single interest): 1.9064
+最大回撤 (Max Drawdown): -23.80%
+最大回撤 (Max Drawdown): -23.80%
+Calmar Ratio: 5.19
+Calmar Ratio: 5.19
+annual return: 123.42%
+annual return: 123.42%
+calculate_ma_ortho                                     0.176000
+factor_bollinger_power_ortho                           0.162833
+fct001_ortho                                           0.120667
+create_trend_following_vol_factor_ortho                0.116667
+calculate_multi_period_momentum_filter_hourly_ortho    0.108167
+calculate_optimized_position_v2_ortho                  0.106500
+mean_revert_when_neutral_and_stable_ortho              0.103833
+greed_factor_ortho                                     0.062500
+laziness_factor_ortho                                  0.042833
+Name: Feature Importance, dtype: float64
+calculate_ma_ortho                                     0.176000
+factor_bollinger_power_ortho                           0.162833
+fct001_ortho                                           0.120667
+create_trend_following_vol_factor_ortho                0.116667
+calculate_multi_period_momentum_filter_hourly_ortho    0.108167
+calculate_optimized_position_v2_ortho                  0.106500
+mean_revert_when_neutral_and_stable_ortho              0.103833
+greed_factor_ortho                                     0.062500
+laziness_factor_ortho                                  0.042833
+Name: Feature Importance, dtype: float64
+年化夏普比率 (Annualized Sharpe Ratio): 1.5482
+年化夏普比率 (Annualized Sharpe Ratio): 1.5482
+年化夏普比率 (Annualized Sharpe Ratio single interest): 1.6735
+年化夏普比率 (Annualized Sharpe Ratio single interest): 1.6735
+最大回撤 (Max Drawdown): -22.34%
+最大回撤 (Max Drawdown): -22.34%
+Calmar Ratio: 2.66
+Calmar Ratio: 2.66
+annual return: 59.32%
+annual return: 59.32%
