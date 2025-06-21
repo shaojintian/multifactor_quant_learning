@@ -27,7 +27,7 @@ logger.setLevel(logging.INFO)
 # 0 data preprocess
 _period_minutes = 60
 _trading_hours = 24
-_coin = "btc"
+_coin = "eth"
 # %%
 #1. 读取行情数据
 z = pd.read_csv(f'data/crypto/{_coin}usdt_{_period_minutes}m.csv',index_col=0)
